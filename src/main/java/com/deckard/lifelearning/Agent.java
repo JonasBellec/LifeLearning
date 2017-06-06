@@ -19,7 +19,7 @@ public class Agent {
 		mapNeed.put(action.getNeed(), oldScore + 4);
 	}
 
-	public Integer computeHappiness() {
+	public Integer computeReward() {
 		for (Integer needScore : mapNeed.values()) {
 			if (needScore <= 0) {
 				return -1000;
