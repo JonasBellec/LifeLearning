@@ -7,16 +7,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.deckard.lifelearning.policy.IPolicy;
-import com.deckard.lifelearning.policy.TrainingPolicy;
+import com.deckard.lifelearning.policy.InitPolicy;
 
+import weka.classifiers.functions.LinearRegression;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 
-public class Training {
+public class Init {
 	public static void main(String[] args) {
 
-		IPolicy policy = new TrainingPolicy();
+		IPolicy policy = new InitPolicy();
 
 		Environment environment = new Environment(policy, 10000);
 
@@ -27,7 +29,7 @@ public class Training {
 		Map<Action, Instances> mapFusionned = new HashMap<>();
 
 		for (Agent agent : environment.getListAgent()) {
-			Map<Action, Instances> mapInstances = ((TrainingPolicy) environment.getPolicy()).getData().get(agent);
+			Map<Action, Instances> mapInstances = ((InitPolicy) environment.getPolicy()).getData().get(agent);
 
 			for (Entry<Action, Instances> entry : mapInstances.entrySet()) {
 				Attribute reward = entry.getValue().attribute("reward");
@@ -55,6 +57,11 @@ public class Training {
 				writer.newLine();
 				writer.flush();
 				writer.close();
+
+				LinearRegression linearRegression = new LinearRegression();
+				linearRegression.buildClassifier(entry.getValue());
+
+				SerializationHelper.write("" + entry.getKey().toString() + ".model", linearRegression);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);

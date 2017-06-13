@@ -3,6 +3,8 @@ package com.deckard.lifelearning;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.RandomUtils;
+
 public class Agent {
 
 	private Map<Need, Integer> mapNeed;
@@ -11,9 +13,9 @@ public class Agent {
 
 	public Agent() {
 		mapNeed = new HashMap<>();
-		mapNeed.put(Need.NEED1, 10);
-		mapNeed.put(Need.NEED2, 10);
-		mapNeed.put(Need.NEED3, 10);
+		mapNeed.put(Need.NEED1, RandomUtils.nextInt() % 10 + 5);
+		mapNeed.put(Need.NEED2, RandomUtils.nextInt() % 10 + 5);
+		mapNeed.put(Need.NEED3, RandomUtils.nextInt() % 10 + 5);
 	}
 
 	public void life() {
@@ -25,7 +27,7 @@ public class Agent {
 
 	public void act(Action action) {
 		if (action == Action.ACTION4) {
-			happiness++;
+			happiness += 10;
 		} else {
 			Integer oldScore = mapNeed.get(action.getNeed());
 			mapNeed.put(action.getNeed(), oldScore + 4);
@@ -36,7 +38,7 @@ public class Agent {
 		for (Integer needScore : mapNeed.values()) {
 			if (needScore <= 0) {
 				alive = false;
-				return -1000;
+				return -10;
 			}
 		}
 

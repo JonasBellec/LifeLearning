@@ -12,7 +12,7 @@ public class ClassifierPredictor extends AbstractPredictor {
 
 	public ClassifierPredictor(String fileModel) {
 		try {
-			cls = (Classifier) SerializationHelper.read(new FileInputStream(fileModel));
+			cls = (Classifier) SerializationHelper.read(new FileInputStream(fileModel + ".model"));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
