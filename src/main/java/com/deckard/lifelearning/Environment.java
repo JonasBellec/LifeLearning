@@ -32,11 +32,10 @@ public class Environment {
 		}
 
 		for (Agent agent : listAgent) {
+			agent.life();
 			if (agent.getAlive()) {
-				agent.life();
 				Action action = policy.predict(agent, populateMapVariable(agent));
 				agent.act(action);
-				agent.computeReward();
 			}
 		}
 	}

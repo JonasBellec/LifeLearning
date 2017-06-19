@@ -22,7 +22,9 @@ public class Init {
 
 		Environment environment = new Environment(policy, 10000);
 
-		for (int i = 0; i < 48; i++) {
+		Integer days = 2;
+
+		for (int i = 0; i < 24 * days; i++) {
 			environment.tick();
 		}
 
@@ -32,11 +34,11 @@ public class Init {
 			Map<Action, Instances> mapInstances = ((InitPolicy) environment.getPolicy()).getData().get(agent);
 
 			for (Entry<Action, Instances> entry : mapInstances.entrySet()) {
-				Attribute reward = entry.getValue().attribute("reward");
-				entry.getValue().setClass(reward);
+				Attribute attribute = entry.getValue().attribute("reward");
+				entry.getValue().setClass(attribute);
 
 				for (Instance instance : entry.getValue()) {
-					instance.setValue(reward, agent.computeReward());
+					instance.setValue(attribute, agent.computeReward());
 				}
 
 				Instances instances = mapFusionned.get(entry.getKey());
@@ -58,10 +60,12 @@ public class Init {
 				writer.flush();
 				writer.close();
 
-				LinearRegression linearRegression = new LinearRegression();
-				linearRegression.buildClassifier(entry.getValue());
+				if (!entry.getValue().isEmpty()) {
+					LinearRegression classifier = new LinearRegression();
+					classifier.buildClassifier(entry.getValue());
 
-				SerializationHelper.write("" + entry.getKey().toString() + ".model", linearRegression);
+					SerializationHelper.write("" + entry.getKey().toString() + ".model", classifier);
+				}
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);

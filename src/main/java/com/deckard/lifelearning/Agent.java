@@ -9,6 +9,7 @@ public class Agent {
 
 	private Map<Need, Integer> mapNeed;
 	private Integer happiness = 0;
+	private Integer ticks = 0;
 	private Boolean alive = true;
 
 	public Agent() {
@@ -19,30 +20,36 @@ public class Agent {
 	}
 
 	public void life() {
-		for (Need need : mapNeed.keySet()) {
-			Integer oldScore = mapNeed.get(need);
-			mapNeed.put(need, --oldScore);
+		ticks++;
+
+		if (alive) {
+			for (Need need : mapNeed.keySet()) {
+				Integer oldScore = mapNeed.get(need);
+				mapNeed.put(need, --oldScore);
+			}
+
+			for (Integer needScore : mapNeed.values()) {
+				if (needScore <= 0) {
+					alive = false;
+					happiness = 0;
+				}
+			}
+		} else {
+			happiness--;
 		}
 	}
 
 	public void act(Action action) {
 		if (action == Action.ACTION4) {
-			happiness += 10;
+			happiness++;
 		} else {
 			Integer oldScore = mapNeed.get(action.getNeed());
 			mapNeed.put(action.getNeed(), oldScore + 4);
 		}
 	}
 
-	public Integer computeReward() {
-		for (Integer needScore : mapNeed.values()) {
-			if (needScore <= 0) {
-				alive = false;
-				return -10;
-			}
-		}
-
-		return happiness;
+	public Double computeReward() {
+		return ((double) happiness) / ((double) ticks);
 	}
 
 	public Map<Need, Integer> getMapNeed() {
