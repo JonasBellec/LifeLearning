@@ -1,5 +1,9 @@
 package com.deckard.qlearning.space;
 
-public interface IObservation<S extends IState> extends Iterable<S> {
-	int size();
+import java.io.Serializable;
+
+public interface IObservation<V extends Serializable, S extends IState<V>> {
+	S getObservedState();
+
+	V getObservedValue();
 }

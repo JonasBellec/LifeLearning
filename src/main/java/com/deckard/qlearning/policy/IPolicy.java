@@ -2,10 +2,11 @@ package com.deckard.qlearning.policy;
 
 import com.deckard.qlearning.space.IAction;
 import com.deckard.qlearning.space.IActionSpace;
-import com.deckard.qlearning.space.IObservation;
-import com.deckard.qlearning.space.IState;
+import com.deckard.qlearning.space.IStateSpace;
+import com.deckard.qlearning.universe.IAgent;
+import com.deckard.qlearning.universe.IRealUniverse;
 
-public interface IPolicy<S extends IState, O extends IObservation<S>, A extends IAction, AS extends IActionSpace<A>> {
+public interface IPolicy<T extends IStateSpace, B extends IActionSpace> {
 
-	A computeBestAction(O observation);
+	IAction computeBestAction(IRealUniverse<T, B> realUniverse, IAgent<T, B> agent);
 }

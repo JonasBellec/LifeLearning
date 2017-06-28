@@ -1,11 +1,11 @@
 package com.deckard.qlearning.universe;
 
-import com.deckard.qlearning.space.IAction;
-import com.deckard.qlearning.space.IState;
+import com.deckard.qlearning.space.IActionSpace;
+import com.deckard.qlearning.space.IStateSpace;
 
-public interface IVirtualUniverse<S extends IState, A extends IAction> extends IUniverse<S, A> {
+public interface IVirtualUniverse<T extends IStateSpace, B extends IActionSpace> extends IUniverse<T, B> {
 
-	IAgent<S, A> getOwner();
+	IAgent<T, B> getOwner();
 
 	void step();
 

@@ -1,10 +1,10 @@
 package com.deckard.qlearning.space;
 
-public interface IActionSpace<A extends IAction> extends Iterable<A> {
+public interface IActionSpace extends Iterable<IAction> {
 
 	int size();
 
-	A random();
+	IAction random();
 
-	A noOp();
+	IAction noOp();
 }

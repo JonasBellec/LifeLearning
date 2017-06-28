@@ -1,5 +1,5 @@
 package com.deckard.qlearning.space;
 
-public interface IStateSpace<S extends IState> extends Iterable<S> {
+public interface IStateSpace extends Iterable<IState<?>> {
 	int size();
 }
