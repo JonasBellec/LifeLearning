@@ -6,7 +6,9 @@ import com.deckard.qlearning.space.IStateSpace;
 import com.deckard.qlearning.universe.IAgent;
 import com.deckard.qlearning.universe.IRealUniverse;
 
-public interface IPolicy<T extends IStateSpace, B extends IActionSpace> {
+public interface IPolicy<T1 extends IStateSpace, T2 extends IStateSpace, B extends IActionSpace> {
 
-	IAction computeBestAction(IRealUniverse<T, B> realUniverse, IAgent<T, B> agent);
+	IAction determineActionWithLearning(IRealUniverse<T1> realUniverse, IAgent<T2, B> agent);
+
+	IAction determineActionWithoutLearning(IRealUniverse<T1> realUniverse, IAgent<T2, B> agent);
 }
