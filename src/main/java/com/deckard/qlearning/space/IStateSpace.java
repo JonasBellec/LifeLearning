@@ -1,11 +1,26 @@
 package com.deckard.qlearning.space;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public interface IStateSpace extends Iterable<IState<?>> {
-	int totalSize();
+public abstract class IStateSpace extends ArrayList<IState<?>> {
 
-	List<IState<?>> getUniverseStateSpace();
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1763039952633380076L;
 
-	List<IState<?>> getAgentStateSpace();
+	private IStateSpace() {
+
+	}
+
+	public static IStateSpace getInstance() {
+		return null;
+	}
+
+	public abstract int totalSize();
+
+	public abstract List<IState<?>> getUniverseStateSpace();
+
+	public abstract List<IState<?>> getAgentStateSpace();
 }
