@@ -7,4 +7,6 @@ public interface IActionSpace extends Iterable<IAction> {
 	IAction random();
 
 	IAction noOp();
+
+	IAction decode(int code);
 }
