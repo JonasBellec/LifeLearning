@@ -3,13 +3,12 @@ package com.deckard.qlearning.policy;
 import java.util.List;
 
 import com.deckard.qlearning.space.IAction;
-import com.deckard.qlearning.space.IActionSpace;
-import com.deckard.qlearning.space.IObservationSpace;
-import com.deckard.qlearning.space.IStateSpace;
+import com.deckard.qlearning.space.IState;
+import com.deckard.qlearning.space.ObservationSpace;
 
-public interface IPredictor<T extends IStateSpace, B extends IActionSpace> {
+public interface IPredictor<S extends Enum<S> & IState<?>, A extends Enum<A> & IAction> {
 
-	IAction predictAction(IObservationSpace<T> observationSpace);
+	IAction predictAction(ObservationSpace<S> observationSpace);
 
-	void train(List<Transition<T>> listTransition);
+	void train(List<Transition<S, A>> listTransition);
 }

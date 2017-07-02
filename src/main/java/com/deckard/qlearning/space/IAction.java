@@ -1,5 +1,4 @@
 package com.deckard.qlearning.space;
 
-public interface IAction {
-	int encode();
+public interface IAction extends IEncodable {
 }

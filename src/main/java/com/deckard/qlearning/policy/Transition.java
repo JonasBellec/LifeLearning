@@ -1,19 +1,19 @@
 package com.deckard.qlearning.policy;
 
 import com.deckard.qlearning.space.IAction;
-import com.deckard.qlearning.space.IObservationSpace;
-import com.deckard.qlearning.space.IStateSpace;
+import com.deckard.qlearning.space.IState;
+import com.deckard.qlearning.space.ObservationSpace;
 
-public class Transition<T extends IStateSpace> {
-	IObservationSpace<T> observationSpaceSource;
-	IObservationSpace<T> observationSpaceTarget;
-	IAction action;
+public class Transition<S extends IState<?>, A extends IAction> {
+	ObservationSpace<S> observationSpaceSource;
+	ObservationSpace<S> observationSpaceTarget;
+	A action;
 	double reward;
 
 	/**
 	 * @return the observationSpaceSource
 	 */
-	public IObservationSpace<T> getObservationSpaceSource() {
+	public ObservationSpace<S> getObservationSpaceSource() {
 		return observationSpaceSource;
 	}
 
@@ -21,14 +21,14 @@ public class Transition<T extends IStateSpace> {
 	 * @param observationSpaceSource
 	 *            the observationSpaceSource to set
 	 */
-	public void setObservationSpaceSource(IObservationSpace<T> observationSpaceSource) {
+	public void setObservationSpaceSource(ObservationSpace<S> observationSpaceSource) {
 		this.observationSpaceSource = observationSpaceSource;
 	}
 
 	/**
 	 * @return the observationSpaceTarget
 	 */
-	public IObservationSpace<T> getObservationSpaceTarget() {
+	public ObservationSpace<S> getObservationSpaceTarget() {
 		return observationSpaceTarget;
 	}
 
@@ -36,14 +36,14 @@ public class Transition<T extends IStateSpace> {
 	 * @param observationSpaceTarget
 	 *            the observationSpaceTarget to set
 	 */
-	public void setObservationSpaceTarget(IObservationSpace<T> observationSpaceTarget) {
+	public void setObservationSpaceTarget(ObservationSpace<S> observationSpaceTarget) {
 		this.observationSpaceTarget = observationSpaceTarget;
 	}
 
 	/**
 	 * @return the action
 	 */
-	public IAction getAction() {
+	public A getAction() {
 		return action;
 	}
 
@@ -51,7 +51,7 @@ public class Transition<T extends IStateSpace> {
 	 * @param action
 	 *            the action to set
 	 */
-	public void setAction(IAction action) {
+	public void setAction(A action) {
 		this.action = action;
 	}
 

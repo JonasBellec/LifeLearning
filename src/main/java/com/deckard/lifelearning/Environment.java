@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.deckard.lifelearning.policy.IPolicy;
+import com.deckard.qlearning.universe.IRealUniverse;
 
-public class Environment {
+public class Environment implements IRealUniverse<State, Action> {
 
 	private List<Agent> listAgent = new ArrayList<>();
 	private IPolicy policy;

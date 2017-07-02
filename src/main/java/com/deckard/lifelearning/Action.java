@@ -1,17 +1,17 @@
 package com.deckard.lifelearning;
 
-public class Action {
-	public static Action ACTION1 = new Action("ACTION1", Need.NEED1);
-	public static Action ACTION2 = new Action("ACTION2", Need.NEED2);
-	public static Action ACTION3 = new Action("ACTION3", Need.NEED3);
-	public static Action ACTION4 = new Action("ACTION4", Need.NEED4);
+import com.deckard.qlearning.space.IAction;
 
-	public static Action[] ARRAY_ACTION = new Action[] { ACTION1, ACTION2, ACTION3, ACTION4 };
+public enum Action implements IAction {
+	ACTION1("ACTION1", Need.NEED1),
+	ACTION2("ACTION2", Need.NEED2),
+	ACTION3("ACTION3", Need.NEED3),
+	ACTION4("ACTION4", Need.NEED4);
 
 	private String name;
 	private Need need;
 
-	public Action(String name, Need need) {
+	private Action(String name, Need need) {
 		this.name = name;
 		this.need = need;
 	}
@@ -27,5 +27,11 @@ public class Action {
 	@Override
 	public String toString() {
 		return name;
+	}
+
+	@Override
+	public int encode() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 }

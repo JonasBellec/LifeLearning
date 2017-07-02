@@ -2,41 +2,55 @@ package com.deckard.qlearning.policy;
 
 import java.util.Random;
 
+import com.deckard.qlearning.space.ActionSpace;
 import com.deckard.qlearning.space.IAction;
-import com.deckard.qlearning.space.IActionSpace;
-import com.deckard.qlearning.space.IStateSpace;
+import com.deckard.qlearning.space.IState;
+import com.deckard.qlearning.space.ObservationSpace;
+import com.deckard.qlearning.space.StateSpace;
 import com.deckard.qlearning.universe.IAgent;
 import com.deckard.qlearning.universe.IRealUniverse;
 import com.deckard.qlearning.universe.IVirtualUniverse;
 
-public class QLearningPolicy<T extends IStateSpace, B extends IActionSpace> implements IPolicy<T, B> {
+public class QLearningPolicy<S extends Enum<S> & IState<?>, A extends Enum<A> & IAction> implements IPolicy<S, A> {
 
-	private IPredictor<T, B> predictor;
+	private IPredictor<S, A> predictor;
 	private Random random;
+	private StateSpace<S> stateSpace;
+	private ActionSpace<A> actionSpace;
+
+	public QLearningPolicy(Class<S> classState, Class<A> classAction) {
+		this.stateSpace = StateSpace.getInstance(classState);
+		this.actionSpace = ActionSpace.getInstance(classAction);
+	}
 
 	public double getEpsilon() {
 		return 0.2d;
 	}
 
 	@Override
-	public IAction determineActionWithLearning(IRealUniverse<T> realUniverse, IAgent<T, B> agent) {
-		if (random.nextDouble() > getEpsilon()) {
-			return predictor.predictAction(realUniverse.virtualize(agent), agent);
-		} else {
-			return agent.getActionSpace().random();
-		}
+	public IAction determineActionWithLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent) {
+		return determineActionWithoutLearning(realUniverse, agent);
 	}
 
 	@Override
-	public IAction determineActionWithoutLearning(IRealUniverse<T> realUniverse, IAgent<T, B> agent) {
+	public IAction determineActionWithoutLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent) {
 		return determineAction(realUniverse.virtualize(agent), agent);
 	}
 
-	public IAction determineAction(IVirtualUniverse<T> virtualUniverse, IAgent<T, B> agent) {
+	public IAction determineAction(IVirtualUniverse<S, A> virtualUniverse, IAgent<S, A> agent) {
 		if (random.nextDouble() > getEpsilon()) {
-			return predictor.predictAction(virtualUniverse, agent);
+			return predictor.predictAction(determineObservationSpace(virtualUniverse, agent));
 		} else {
-			return agent.getActionSpace().random();
+			return actionSpace.random();
 		}
+	}
+
+	private ObservationSpace<S> determineObservationSpace(IVirtualUniverse<S, A> virtualUniverse, IAgent<S, A> agent) {
+		ObservationSpace<S> observationSpace = new ObservationSpace<>();
+
+		observationSpace.addAll(virtualUniverse.getObservationSpace());
+		observationSpace.addAll(agent.getObservationSpace());
+
+		return observationSpace;
 	}
 }

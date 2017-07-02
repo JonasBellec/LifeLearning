@@ -1,11 +1,9 @@
 package com.deckard.qlearning.universe;
 
-import com.deckard.qlearning.space.IActionSpace;
-import com.deckard.qlearning.space.IObservationSpace;
-import com.deckard.qlearning.space.IStateSpace;
+import com.deckard.qlearning.space.IAction;
+import com.deckard.qlearning.space.IState;
+import com.deckard.qlearning.space.ObservationSpace;
 
-public interface IAgent<T extends IStateSpace, B extends IActionSpace> {
-	IObservationSpace<T> getObservationSpace();
-
-	B getActionSpace();
+public interface IAgent<S extends Enum<S> & IState<?>, A extends Enum<A> & IAction> {
+	ObservationSpace<S> getObservationSpace();
 }

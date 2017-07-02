@@ -11,34 +11,41 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import com.deckard.qlearning.policy.IPredictor;
 import com.deckard.qlearning.policy.Transition;
+import com.deckard.qlearning.space.ActionSpace;
 import com.deckard.qlearning.space.IAction;
-import com.deckard.qlearning.space.IActionSpace;
-import com.deckard.qlearning.space.IObservationSpace;
-import com.deckard.qlearning.space.IStateSpace;
+import com.deckard.qlearning.space.IState;
+import com.deckard.qlearning.space.ObservationSpace;
+import com.deckard.qlearning.space.StateSpace;
 
-public class NeuralNetworkPredictor<T extends IStateSpace, B extends IActionSpace> implements IPredictor<T, B> {
+public class NeuralNetworkPredictor<S extends Enum<S> & IState<?>, A extends Enum<A> & IAction>
+		implements IPredictor<S, A> {
 	private MultiLayerNetwork multiLayerNetworkSource;
 	private MultiLayerNetwork multiLayerNetworkTarget;
 	private double discount;
+	private StateSpace<S> stateSpace;
+	private ActionSpace<A> actionSpace;
 
-	NeuralNetworkPredictor(MultiLayerConfiguration conf) {
+	public NeuralNetworkPredictor(MultiLayerConfiguration conf, Class<S> classState, Class<A> classAction) {
 		multiLayerNetworkSource = new MultiLayerNetwork(conf);
 		multiLayerNetworkSource.init();
 		multiLayerNetworkTarget = new MultiLayerNetwork(conf);
 		multiLayerNetworkTarget.init();
 		multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
+
+		this.stateSpace = StateSpace.getInstance(classState);
+		this.actionSpace = ActionSpace.getInstance(classAction);
 	}
 
 	@Override
-	public IAction predictAction(IObservationSpace<T> observationSpace) {
+	public IAction predictAction(ObservationSpace<S> observationSpace) {
 		INDArray arrayInput = createArrayFromObservedSpace(observationSpace);
 		INDArray arrayOutput = multiLayerNetworkSource.output(arrayInput);
 
-		return Nd4j.argMax(arrayOutput, Integer.MAX_VALUE).getInt(0);
+		return actionSpace.decode(Nd4j.argMax(arrayOutput, Integer.MAX_VALUE).getInt(0));
 	}
 
 	@Override
-	public void train(List<Transition<T>> transitions) {
+	public void train(List<Transition<S, A>> transitions) {
 
 		INDArray arrayInputSource = createArrayFromObservedSpace(
 				transitions.stream().map(p -> p.getObservationSpaceSource()));
@@ -51,7 +58,7 @@ public class NeuralNetworkPredictor<T extends IStateSpace, B extends IActionSpac
 		INDArray arrayMaxAction = Nd4j.argMax(arrayOutputTarget, 1);
 
 		for (int i = 0; i < transitions.size(); i++) {
-			Transition<T> transition = transitions.get(i);
+			Transition<S, A> transition = transitions.get(i);
 
 			double rewardTarget = transition.getReward()
 					+ discount * arrayOutputTarget.getDouble(i, arrayMaxAction.getInt(i));
@@ -62,18 +69,18 @@ public class NeuralNetworkPredictor<T extends IStateSpace, B extends IActionSpac
 		multiLayerNetworkSource.fit(arrayInputSource, arrayOutputSource);
 	}
 
-	private INDArray createArrayFromObservedSpace(Stream<IObservationSpace<T>> observationSpaces) {
-		INDArray array = Nd4j.create(observationSpaces.count(), InputLength);
+	private INDArray createArrayFromObservedSpace(Stream<ObservationSpace<S>> observationSpaces) {
+		INDArray array = Nd4j.create((int) observationSpaces.count(), stateSpace.size());
 		int row = 0;
 
-		for (IObservationSpace<T> observationSpace : observationSpaces.collect(Collectors.toList())) {
+		for (ObservationSpace<S> observationSpace : observationSpaces.collect(Collectors.toList())) {
 			array.putRow(row++, createArrayFromObservedSpace(observationSpace));
 		}
 
 		return array;
 	}
 
-	private INDArray createArrayFromObservedSpace(IObservationSpace<T> observationSpace) {
+	private INDArray createArrayFromObservedSpace(ObservationSpace<S> observationSpace) {
 		return Nd4j.create(observationSpace.encode());
 	}
 }

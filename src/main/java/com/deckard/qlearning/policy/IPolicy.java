@@ -1,14 +1,13 @@
 package com.deckard.qlearning.policy;
 
 import com.deckard.qlearning.space.IAction;
-import com.deckard.qlearning.space.IActionSpace;
-import com.deckard.qlearning.space.IStateSpace;
+import com.deckard.qlearning.space.IState;
 import com.deckard.qlearning.universe.IAgent;
 import com.deckard.qlearning.universe.IRealUniverse;
 
-public interface IPolicy<T extends IStateSpace, B extends IActionSpace> {
+public interface IPolicy<S extends Enum<S> & IState<?>, A extends Enum<A> & IAction> {
 
-	IAction determineActionWithLearning(IRealUniverse<T> realUniverse, IAgent<T, B> agent);
+	IAction determineActionWithLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent);
 
-	IAction determineActionWithoutLearning(IRealUniverse<T> realUniverse, IAgent<T, B> agent);
+	IAction determineActionWithoutLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent);
 }
