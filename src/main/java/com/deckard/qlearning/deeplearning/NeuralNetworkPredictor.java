@@ -17,7 +17,7 @@ import com.deckard.qlearning.space.IState;
 import com.deckard.qlearning.space.ObservationSpace;
 import com.deckard.qlearning.space.StateSpace;
 
-public class NeuralNetworkPredictor<S extends Enum<S> & IState<?>, A extends Enum<A> & IAction>
+public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A> & IAction>
 		implements IPredictor<S, A> {
 	private MultiLayerNetwork multiLayerNetworkSource;
 	private MultiLayerNetwork multiLayerNetworkTarget;

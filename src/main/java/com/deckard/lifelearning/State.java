@@ -4,7 +4,12 @@ import com.deckard.qlearning.space.IState;
 
 public enum State implements IState {
 
-	NEED1("need1"), NEED2("need1"), NEED3("need1"), HAPPINESS("happiness"), DAY("day"), HOUR("hour");
+	NEED1("need1"),
+	NEED2("need1"),
+	NEED3("need1"),
+	HAPPINESS("happiness"),
+	DAY("day"),
+	HOUR("hour");
 
 	private String name;
 
@@ -19,13 +24,6 @@ public enum State implements IState {
 
 	@Override
 	public int encode() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public Class getAssociatedValueClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return ordinal();
 	}
 }

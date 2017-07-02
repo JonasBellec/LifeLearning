@@ -4,7 +4,7 @@ import com.deckard.qlearning.space.IAction;
 import com.deckard.qlearning.space.IState;
 import com.deckard.qlearning.space.ObservationSpace;
 
-public class Transition<S extends IState<?>, A extends IAction> {
+public class Transition<S extends IState, A extends IAction> {
 	ObservationSpace<S> observationSpaceSource;
 	ObservationSpace<S> observationSpaceTarget;
 	A action;

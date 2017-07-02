@@ -11,7 +11,7 @@ import com.deckard.qlearning.universe.IAgent;
 import com.deckard.qlearning.universe.IRealUniverse;
 import com.deckard.qlearning.universe.IVirtualUniverse;
 
-public class QLearningPolicy<S extends Enum<S> & IState<?>, A extends Enum<A> & IAction> implements IPolicy<S, A> {
+public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAction> implements IPolicy<S, A> {
 
 	private IPredictor<S, A> predictor;
 	private Random random;

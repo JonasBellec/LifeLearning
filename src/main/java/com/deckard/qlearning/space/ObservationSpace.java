@@ -2,7 +2,7 @@ package com.deckard.qlearning.space;
 
 import java.util.ArrayList;
 
-public class ObservationSpace<S extends IState<?>> extends ArrayList<Observation<?, S>> {
+public class ObservationSpace<S extends IState> extends ArrayList<Observation<?, S>> {
 	/**
 	 * 
 	 */

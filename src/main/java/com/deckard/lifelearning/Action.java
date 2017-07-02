@@ -31,7 +31,6 @@ public enum Action implements IAction {
 
 	@Override
 	public int encode() {
-		// TODO Auto-generated method stub
-		return 0;
+		return ordinal();
 	}
 }

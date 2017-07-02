@@ -1,9 +1,5 @@
 package com.deckard.qlearning.space;
 
-import java.io.Serializable;
-
-public interface IState<V extends Serializable> extends IEncodable {
+public interface IState extends IEncodable {
 	String getName();
-
-	Class<V> getAssociatedValueClass();
 }
