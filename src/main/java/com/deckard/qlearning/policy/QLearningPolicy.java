@@ -18,9 +18,10 @@ public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAc
 	private StateSpace<S> stateSpace;
 	private ActionSpace<A> actionSpace;
 
-	public QLearningPolicy(Class<S> classState, Class<A> classAction) {
+	public QLearningPolicy(Class<S> classState, Class<A> classAction, IPredictor<S, A> predictor) {
 		this.stateSpace = StateSpace.getInstance(classState);
 		this.actionSpace = ActionSpace.getInstance(classAction);
+		this.predictor = predictor;
 	}
 
 	public double getEpsilon() {
@@ -28,16 +29,16 @@ public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAc
 	}
 
 	@Override
-	public IAction determineActionWithLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent) {
+	public A determineActionWithLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent) {
 		return determineActionWithoutLearning(realUniverse, agent);
 	}
 
 	@Override
-	public IAction determineActionWithoutLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent) {
+	public A determineActionWithoutLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent) {
 		return determineAction(realUniverse.virtualize(agent), agent);
 	}
 
-	public IAction determineAction(IVirtualUniverse<S, A> virtualUniverse, IAgent<S, A> agent) {
+	public A determineAction(IVirtualUniverse<S, A> virtualUniverse, IAgent<S, A> agent) {
 		if (random.nextDouble() > getEpsilon()) {
 			return predictor.predictAction(determineObservationSpace(virtualUniverse, agent));
 		} else {
@@ -48,8 +49,8 @@ public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAc
 	private ObservationSpace<S> determineObservationSpace(IVirtualUniverse<S, A> virtualUniverse, IAgent<S, A> agent) {
 		ObservationSpace<S> observationSpace = new ObservationSpace<>();
 
-		observationSpace.addAll(virtualUniverse.getObservationSpace());
-		observationSpace.addAll(agent.getObservationSpace());
+		observationSpace.addAll(virtualUniverse.getObservationSpace(stateSpace.getUniverseStates()));
+		observationSpace.addAll(agent.getObservationSpace(stateSpace.getAgentStates()));
 
 		return observationSpace;
 	}

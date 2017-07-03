@@ -1,4 +1,4 @@
-package com.deckard.lifelearning;
+package com.deckard.lifelearning.model;
 
 public class Need {
 	public static Need NEED1 = new Need();

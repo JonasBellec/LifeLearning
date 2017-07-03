@@ -7,7 +7,7 @@ import com.deckard.qlearning.universe.IRealUniverse;
 
 public interface IPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAction> {
 
-	IAction determineActionWithLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent);
+	A determineActionWithLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent);
 
-	IAction determineActionWithoutLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent);
+	A determineActionWithoutLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent);
 }

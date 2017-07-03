@@ -1,5 +1,6 @@
 package com.deckard.qlearning.space;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,15 +22,38 @@ public class StateSpace<S extends Enum<S> & IState> extends Space<S> {
 		return instance;
 	}
 
+	private List<S> universeStateSpace = null;
+	private List<S> agentStateSpace = null;
+
 	private StateSpace(Class<S> clazz) {
 		super(clazz);
 	}
 
-	public List<IState> getUniverseStateSpace() {
-		return null;
+	public List<S> getUniverseStates() {
+		if (universeStateSpace == null) {
+			universeStateSpace = new ArrayList<>();
+
+			for (S state : clazz.getEnumConstants()) {
+				if (state.isUniverseState()) {
+					universeStateSpace.add(state);
+				}
+			}
+		}
+
+		return universeStateSpace;
 	}
 
-	public List<IState> getAgentStateSpace() {
-		return null;
+	public List<S> getAgentStates() {
+		if (agentStateSpace == null) {
+			agentStateSpace = new ArrayList<>();
+
+			for (S state : clazz.getEnumConstants()) {
+				if (state.isAgentState()) {
+					agentStateSpace.add(state);
+				}
+			}
+		}
+
+		return agentStateSpace;
 	}
 }

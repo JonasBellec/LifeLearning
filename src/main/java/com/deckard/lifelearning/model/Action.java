@@ -1,4 +1,4 @@
-package com.deckard.lifelearning;
+package com.deckard.lifelearning.model;
 
 import com.deckard.qlearning.space.IAction;
 
@@ -18,10 +18,6 @@ public enum Action implements IAction {
 
 	public Need getNeed() {
 		return need;
-	}
-
-	public void setNeed(Need need) {
-		this.need = need;
 	}
 
 	@Override

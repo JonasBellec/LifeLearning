@@ -26,18 +26,18 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 	private ActionSpace<A> actionSpace;
 
 	public NeuralNetworkPredictor(MultiLayerConfiguration conf, Class<S> classState, Class<A> classAction) {
-		multiLayerNetworkSource = new MultiLayerNetwork(conf);
-		multiLayerNetworkSource.init();
-		multiLayerNetworkTarget = new MultiLayerNetwork(conf);
-		multiLayerNetworkTarget.init();
-		multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
+		this.multiLayerNetworkSource = new MultiLayerNetwork(conf);
+		this.multiLayerNetworkSource.init();
+		this.multiLayerNetworkTarget = new MultiLayerNetwork(conf);
+		this.multiLayerNetworkTarget.init();
+		this.multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
 
 		this.stateSpace = StateSpace.getInstance(classState);
 		this.actionSpace = ActionSpace.getInstance(classAction);
 	}
 
 	@Override
-	public IAction predictAction(ObservationSpace<S> observationSpace) {
+	public A predictAction(ObservationSpace<S> observationSpace) {
 		INDArray arrayInput = createArrayFromObservedSpace(observationSpace);
 		INDArray arrayOutput = multiLayerNetworkSource.output(arrayInput);
 

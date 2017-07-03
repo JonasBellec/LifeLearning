@@ -2,7 +2,7 @@ package com.deckard.qlearning.space;
 
 import java.io.Serializable;
 
-public class Observation<V extends Serializable, S extends IState> {
+public class Observation<S extends IState, V extends Serializable> {
 
 	private S state;
 	private V value;
