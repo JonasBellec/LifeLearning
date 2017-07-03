@@ -51,13 +51,5 @@
 			<artifactId>nd4j-native-platform</artifactId>
 			<version>0.8.0</version>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/org.deeplearning4j/rl4j-doom -->
-		<dependency>
-			<groupId>org.deeplearning4j</groupId>
-			<artifactId>rl4j-core</artifactId>
-			<version>0.8.0</version>
-		</dependency>
-
 	</dependencies>
 </project>
