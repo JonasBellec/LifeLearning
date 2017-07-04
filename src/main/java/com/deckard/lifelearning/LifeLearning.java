@@ -13,10 +13,10 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
 import com.deckard.lifelearning.model.Action;
 import com.deckard.lifelearning.model.State;
 import com.deckard.lifelearning.universe.RealUniverse;
-import com.deckard.qlearning.deeplearning.NeuralNetworkPredictor;
 import com.deckard.qlearning.policy.IPolicy;
 import com.deckard.qlearning.policy.PolicyConfiguration;
 import com.deckard.qlearning.policy.QLearningPolicy;
+import com.deckard.qlearning.predictor.deeplearning.NeuralNetworkPredictor;
 import com.deckard.qlearning.space.ActionSpace;
 import com.deckard.qlearning.space.StateSpace;
 
@@ -28,6 +28,30 @@ public class LifeLearning {
 
 	public static void main(String[] args) {
 
+		NeuralNetworkPredictor<State, Action> neuralNetworkPredictor;
+
+		try {
+			neuralNetworkPredictor = NeuralNetworkPredictor.load(State.class, Action.class, "configuration.json",
+					"parameters.txt");
+		} catch (Exception e) {
+			neuralNetworkPredictor = createNewNeuralNetworkPredictor();
+		}
+
+		PolicyConfiguration<State, Action> policyConfiguration = new PolicyConfiguration<>(State.class, Action.class);
+		IPolicy<State, Action> policy = new QLearningPolicy<>(policyConfiguration, neuralNetworkPredictor);
+
+		RealUniverse environment = new RealUniverse(policy, 1000);
+
+		Integer days = 2;
+
+		for (int i = 0; i < 24 * days; i++) {
+			environment.step();
+		}
+
+		NeuralNetworkPredictor.save(neuralNetworkPredictor, "configuration.json", "parameters.txt");
+	}
+
+	private static NeuralNetworkPredictor<State, Action> createNewNeuralNetworkPredictor() {
 		int seed = 123;
 		double learningRate = 0.01;
 
@@ -45,17 +69,6 @@ public class LifeLearning {
 								.nOut(ActionSpace.getInstance(Action.class).size()).build())
 				.pretrain(false).backprop(true).build();
 
-		PolicyConfiguration<State, Action> policyConfiguration = new PolicyConfiguration<>(State.class, Action.class);
-
-		IPolicy<State, Action> policy = new QLearningPolicy<>(policyConfiguration,
-				new NeuralNetworkPredictor<>(conf, State.class, Action.class));
-
-		RealUniverse environment = new RealUniverse(policy, 10000);
-
-		Integer days = 2;
-
-		for (int i = 0; i < 24 * days; i++) {
-			environment.step();
-		}
+		return new NeuralNetworkPredictor<>(conf, State.class, Action.class);
 	}
 }

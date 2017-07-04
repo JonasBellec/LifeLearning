@@ -2,6 +2,8 @@ package com.deckard.lifelearning.universe;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.deckard.lifelearning.model.Action;
 import com.deckard.lifelearning.model.Agent;
@@ -21,6 +23,8 @@ public class RealUniverse implements IRealUniverse<State, Action> {
 
 	private ObservationSpace<State> observationSpace;
 
+	private Logger logger = Logger.getLogger(RealUniverse.class.getSimpleName());
+
 	public RealUniverse(IPolicy<State, Action> policy, Integer numberAgent) {
 		this.policy = policy;
 		this.time = new Time();
@@ -29,6 +33,8 @@ public class RealUniverse implements IRealUniverse<State, Action> {
 		for (int i = 0; i < numberAgent; i++) {
 			agents.add(new Agent());
 		}
+
+		observationSpace = new ObservationSpace<>();
 	}
 
 	@Override
@@ -54,6 +60,7 @@ public class RealUniverse implements IRealUniverse<State, Action> {
 			if (agent.getAlive()) {
 				Action action = policy.determineActionWithLearning(this, agent);
 				agent.act(action);
+				logger.log(Level.INFO, agent.toString() + " => " + action.toString());
 			}
 		}
 	}

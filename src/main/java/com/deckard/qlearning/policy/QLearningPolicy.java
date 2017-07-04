@@ -2,6 +2,7 @@ package com.deckard.qlearning.policy;
 
 import java.util.Random;
 
+import com.deckard.qlearning.predictor.IPredictor;
 import com.deckard.qlearning.space.IAction;
 import com.deckard.qlearning.space.IState;
 import com.deckard.qlearning.space.ObservationSpace;
@@ -18,6 +19,8 @@ public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAc
 	public QLearningPolicy(PolicyConfiguration<S, A> policyConfiguration, IPredictor<S, A> predictor) {
 		this.policyConfiguration = policyConfiguration;
 		this.predictor = predictor;
+
+		this.random = new Random();
 	}
 
 	@Override

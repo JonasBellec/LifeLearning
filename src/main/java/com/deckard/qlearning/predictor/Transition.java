@@ -1,4 +1,4 @@
-package com.deckard.qlearning.policy;
+package com.deckard.qlearning.predictor;
 
 import com.deckard.qlearning.space.IAction;
 import com.deckard.qlearning.space.IState;

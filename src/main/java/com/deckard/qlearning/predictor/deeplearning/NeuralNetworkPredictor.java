@@ -1,16 +1,23 @@
-package com.deckard.qlearning.deeplearning;
+package com.deckard.qlearning.predictor.deeplearning;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
-import com.deckard.qlearning.policy.IPredictor;
-import com.deckard.qlearning.policy.Transition;
+import com.deckard.qlearning.predictor.IPredictor;
+import com.deckard.qlearning.predictor.Transition;
 import com.deckard.qlearning.space.ActionSpace;
 import com.deckard.qlearning.space.IAction;
 import com.deckard.qlearning.space.IState;
@@ -25,10 +32,16 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 	private StateSpace<S> stateSpace;
 	private ActionSpace<A> actionSpace;
 
-	public NeuralNetworkPredictor(MultiLayerConfiguration conf, Class<S> classState, Class<A> classAction) {
-		this.multiLayerNetworkSource = new MultiLayerNetwork(conf);
+	private NeuralNetworkPredictor(Class<S> classState, Class<A> classAction) {
+		this.stateSpace = StateSpace.getInstance(classState);
+		this.actionSpace = ActionSpace.getInstance(classAction);
+	}
+
+	public NeuralNetworkPredictor(MultiLayerConfiguration multiLayerConfiguration, Class<S> classState,
+			Class<A> classAction) {
+		this.multiLayerNetworkSource = new MultiLayerNetwork(multiLayerConfiguration);
 		this.multiLayerNetworkSource.init();
-		this.multiLayerNetworkTarget = new MultiLayerNetwork(conf);
+		this.multiLayerNetworkTarget = new MultiLayerNetwork(multiLayerConfiguration);
 		this.multiLayerNetworkTarget.init();
 		this.multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
 
@@ -69,6 +82,10 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 		multiLayerNetworkSource.fit(arrayInputSource, arrayOutputSource);
 	}
 
+	public void updateMultiLayerNetworkTarget() {
+		multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
+	}
+
 	private INDArray createArrayFromObservedSpace(Stream<ObservationSpace<S>> observationSpaces) {
 		INDArray array = Nd4j.create((int) observationSpaces.count(), stateSpace.size());
 		int row = 0;
@@ -82,5 +99,38 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 
 	private INDArray createArrayFromObservedSpace(ObservationSpace<S> observationSpace) {
 		return Nd4j.create(observationSpace.encode());
+	}
+
+	public static void save(NeuralNetworkPredictor<?, ?> predictor, String configuration, String parameters) {
+		try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get(parameters)))) {
+			Nd4j.write(predictor.multiLayerNetworkSource.params(), dos);
+			FileUtils.write(new File(configuration),
+					predictor.multiLayerNetworkSource.getLayerWiseConfigurations().toJson());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static <S extends Enum<S> & IState, A extends Enum<A> & IAction> NeuralNetworkPredictor<S, A> load(
+			Class<S> classState, Class<A> classAction, String configuration, String parameters) {
+
+		try (DataInputStream dis = new DataInputStream(Files.newInputStream(Paths.get(parameters)))) {
+
+			MultiLayerConfiguration multiLayerConfiguration = MultiLayerConfiguration
+					.fromJson(FileUtils.readFileToString(new File(configuration)));
+
+			NeuralNetworkPredictor<S, A> neuralNetworkPredictor = new NeuralNetworkPredictor<>(classState, classAction);
+			neuralNetworkPredictor.multiLayerNetworkSource = new MultiLayerNetwork(multiLayerConfiguration);
+			neuralNetworkPredictor.multiLayerNetworkSource.init();
+			neuralNetworkPredictor.multiLayerNetworkSource.setParameters(Nd4j.read(dis));
+			neuralNetworkPredictor.multiLayerNetworkTarget = new MultiLayerNetwork(multiLayerConfiguration);
+			neuralNetworkPredictor.multiLayerNetworkTarget.init();
+			neuralNetworkPredictor.multiLayerNetworkTarget
+					.setParams(neuralNetworkPredictor.multiLayerNetworkSource.params());
+
+			return neuralNetworkPredictor;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

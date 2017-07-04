@@ -3,6 +3,8 @@ package com.deckard.lifelearning.model;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang3.RandomUtils;
 
@@ -19,6 +21,8 @@ public class Agent implements IAgent<State, Action> {
 
 	private ObservationSpace<State> observationSpace;
 
+	private Logger logger = Logger.getLogger(Agent.class.getSimpleName());
+
 	public Agent() {
 		this.mapNeed = new HashMap<>();
 		this.mapNeed.put(Need.NEED1, RandomUtils.nextInt() % 10 + 5);
@@ -28,6 +32,8 @@ public class Agent implements IAgent<State, Action> {
 		this.happiness = 0;
 		this.ticks = 0;
 		this.alive = true;
+
+		observationSpace = new ObservationSpace<>();
 	}
 
 	public Agent(Agent agent) {
@@ -65,11 +71,10 @@ public class Agent implements IAgent<State, Action> {
 			for (Integer needScore : mapNeed.values()) {
 				if (needScore <= 0) {
 					alive = false;
-					happiness = 0;
+					happiness = -1000;
+					logger.log(Level.INFO, this.toString() + " => Dead");
 				}
 			}
-		} else {
-			happiness--;
 		}
 	}
 
@@ -85,7 +90,7 @@ public class Agent implements IAgent<State, Action> {
 
 	@Override
 	public double computeReward() {
-		return ((double) happiness) / ((double) ticks);
+		return happiness;
 	}
 
 	/**
@@ -93,5 +98,15 @@ public class Agent implements IAgent<State, Action> {
 	 */
 	public Boolean getAlive() {
 		return alive;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Agent [mapNeed=" + mapNeed + ", happiness=" + happiness + ", ticks=" + ticks + ", alive=" + alive;
 	}
 }
