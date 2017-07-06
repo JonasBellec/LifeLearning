@@ -3,7 +3,6 @@ package com.deckard.lifelearning.model;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang3.RandomUtils;
@@ -17,7 +16,7 @@ public class Agent implements IAgent<State, Action> {
 	private Map<Need, Integer> mapNeed;
 	private Integer happiness;
 	private Integer ticks;
-	private Boolean alive;
+	private boolean alive;
 
 	private ObservationSpace<State> observationSpace;
 
@@ -45,6 +44,13 @@ public class Agent implements IAgent<State, Action> {
 		this.happiness = agent.happiness;
 		this.ticks = agent.ticks;
 		this.alive = agent.alive;
+
+		observationSpace = new ObservationSpace<>();
+	}
+
+	@Override
+	public Agent virtualize() {
+		return new Agent(this);
 	}
 
 	@Override
@@ -72,7 +78,7 @@ public class Agent implements IAgent<State, Action> {
 				if (needScore <= 0) {
 					alive = false;
 					happiness = -1000;
-					logger.log(Level.INFO, this.toString() + " => Dead");
+					// logger.log(Level.INFO, this.toString() + " => Dead");
 				}
 			}
 		}
@@ -81,7 +87,7 @@ public class Agent implements IAgent<State, Action> {
 	@Override
 	public void act(Action action) {
 		if (action == Action.ACTION4) {
-			happiness++;
+			happiness += 10;
 		} else {
 			Integer oldScore = mapNeed.get(action.getNeed());
 			mapNeed.put(action.getNeed(), oldScore + 4);
@@ -90,13 +96,18 @@ public class Agent implements IAgent<State, Action> {
 
 	@Override
 	public double computeReward() {
-		return happiness;
+		if (happiness < 0) {
+			return happiness;
+		} else {
+			return happiness / ticks;
+		}
 	}
 
 	/**
 	 * @return the alive
 	 */
-	public Boolean getAlive() {
+	@Override
+	public boolean isAlive() {
 		return alive;
 	}
 

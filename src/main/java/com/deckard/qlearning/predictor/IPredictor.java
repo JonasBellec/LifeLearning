@@ -10,5 +10,5 @@ public interface IPredictor<S extends Enum<S> & IState, A extends Enum<A> & IAct
 
 	A predictAction(ObservationSpace<S> observationSpace);
 
-	void train(List<Transition<S, A>> listTransition);
+	void train(List<Transition<S, A>> transitions);
 }

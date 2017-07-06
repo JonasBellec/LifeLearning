@@ -1,5 +1,8 @@
 package com.deckard.lifelearning;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -11,6 +14,7 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
 
 import com.deckard.lifelearning.model.Action;
+import com.deckard.lifelearning.model.Agent;
 import com.deckard.lifelearning.model.State;
 import com.deckard.lifelearning.universe.RealUniverse;
 import com.deckard.qlearning.policy.IPolicy;
@@ -21,6 +25,8 @@ import com.deckard.qlearning.space.ActionSpace;
 import com.deckard.qlearning.space.StateSpace;
 
 public class LifeLearning {
+
+	private static Logger logger = Logger.getLogger(LifeLearning.class.getSimpleName());
 
 	private LifeLearning() {
 
@@ -40,13 +46,34 @@ public class LifeLearning {
 		PolicyConfiguration<State, Action> policyConfiguration = new PolicyConfiguration<>(State.class, Action.class);
 		IPolicy<State, Action> policy = new QLearningPolicy<>(policyConfiguration, neuralNetworkPredictor);
 
-		RealUniverse environment = new RealUniverse(policy, 1000);
+		RealUniverse realUniverse = new RealUniverse(policy, 1000);
 
-		Integer days = 2;
+		Integer days = 10;
 
 		for (int i = 0; i < 24 * days; i++) {
-			environment.step();
+			realUniverse.step();
 		}
+
+		int alive = 0;
+		int dead = 0;
+		double rewardTotal = 0;
+
+		for (Agent agent : realUniverse.getAgents()) {
+			if (agent.isAlive()) {
+				alive++;
+				rewardTotal += agent.computeReward();
+			} else {
+				dead++;
+			}
+		}
+
+		double rewardAverage = 0;
+
+		if (alive != 0) {
+			rewardAverage = rewardTotal / alive;
+		}
+
+		logger.log(Level.INFO, String.format("alive : %d, dead : %d, averageReward : %f", alive, dead, rewardAverage));
 
 		NeuralNetworkPredictor.save(neuralNetworkPredictor, "configuration.json", "parameters.txt");
 	}
@@ -55,7 +82,7 @@ public class LifeLearning {
 		int seed = 123;
 		double learningRate = 0.01;
 
-		int numHiddenNodes = 20;
+		int numHiddenNodes = 30;
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed).iterations(1)
 				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate)
