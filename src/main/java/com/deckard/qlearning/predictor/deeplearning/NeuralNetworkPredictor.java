@@ -6,9 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -35,18 +34,18 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 	private NeuralNetworkPredictor(Class<S> classState, Class<A> classAction) {
 		this.stateSpace = StateSpace.getInstance(classState);
 		this.actionSpace = ActionSpace.getInstance(classAction);
+
+		discount = 0.8;
 	}
 
 	public NeuralNetworkPredictor(MultiLayerConfiguration multiLayerConfiguration, Class<S> classState,
 			Class<A> classAction) {
+		this(classState, classAction);
 		this.multiLayerNetworkSource = new MultiLayerNetwork(multiLayerConfiguration);
 		this.multiLayerNetworkSource.init();
 		this.multiLayerNetworkTarget = new MultiLayerNetwork(multiLayerConfiguration);
 		this.multiLayerNetworkTarget.init();
 		this.multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
-
-		this.stateSpace = StateSpace.getInstance(classState);
-		this.actionSpace = ActionSpace.getInstance(classAction);
 	}
 
 	@Override
@@ -60,10 +59,16 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 	@Override
 	public void train(List<Transition<S, A>> transitions) {
 
-		INDArray arrayInputSource = createArrayFromObservedSpace(
-				transitions.stream().map(p -> p.getObservationSpaceSource()));
-		INDArray arrayInputTarget = createArrayFromObservedSpace(
-				transitions.stream().map(p -> p.getObservationSpaceTarget()));
+		List<ObservationSpace<S>> observationSpacesSource = new ArrayList<>();
+		List<ObservationSpace<S>> observationSpacesTarget = new ArrayList<>();
+
+		for (Transition<S, A> transition : transitions) {
+			observationSpacesSource.add(transition.getObservationSpaceSource());
+			observationSpacesTarget.add(transition.getObservationSpaceTarget());
+		}
+
+		INDArray arrayInputSource = createArrayFromObservedSpace(observationSpacesSource);
+		INDArray arrayInputTarget = createArrayFromObservedSpace(observationSpacesTarget);
 
 		INDArray arrayOutputSource = multiLayerNetworkSource.output(arrayInputSource);
 		INDArray arrayOutputTarget = multiLayerNetworkTarget.output(arrayInputTarget);
@@ -80,17 +85,18 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 		}
 
 		multiLayerNetworkSource.fit(arrayInputSource, arrayOutputSource);
+		updateMultiLayerNetworkTarget();
 	}
 
 	public void updateMultiLayerNetworkTarget() {
 		multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
 	}
 
-	private INDArray createArrayFromObservedSpace(Stream<ObservationSpace<S>> observationSpaces) {
-		INDArray array = Nd4j.create((int) observationSpaces.count(), stateSpace.size());
+	private INDArray createArrayFromObservedSpace(List<ObservationSpace<S>> observationSpaces) {
+		INDArray array = Nd4j.create(observationSpaces.size(), stateSpace.size());
 		int row = 0;
 
-		for (ObservationSpace<S> observationSpace : observationSpaces.collect(Collectors.toList())) {
+		for (ObservationSpace<S> observationSpace : observationSpaces) {
 			array.putRow(row++, createArrayFromObservedSpace(observationSpace));
 		}
 

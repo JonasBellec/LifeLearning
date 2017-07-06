@@ -10,13 +10,23 @@ public class PolicyConfiguration<S extends Enum<S> & IState, A extends Enum<A> &
 	private StateSpace<S> stateSpace;
 	private ActionSpace<A> actionSpace;
 
+	private int projectionDeep;
+	private double epsilon;
+
 	public PolicyConfiguration(Class<S> classState, Class<A> classAction) {
+		this(classState, classAction, 10, 0.2);
+	}
+
+	public PolicyConfiguration(Class<S> classState, Class<A> classAction, int projectionDeep, double epsilon) {
 		this.stateSpace = StateSpace.getInstance(classState);
 		this.actionSpace = ActionSpace.getInstance(classAction);
+
+		this.projectionDeep = projectionDeep;
+		this.epsilon = epsilon;
 	}
 
 	public double getEpsilon() {
-		return 0.2d;
+		return epsilon;
 	}
 
 	/**
@@ -31,6 +41,13 @@ public class PolicyConfiguration<S extends Enum<S> & IState, A extends Enum<A> &
 	 */
 	public ActionSpace<A> getActionSpace() {
 		return actionSpace;
+	}
+
+	/**
+	 * @return the projectionDeep
+	 */
+	public int getProjectionDeep() {
+		return projectionDeep;
 	}
 
 }

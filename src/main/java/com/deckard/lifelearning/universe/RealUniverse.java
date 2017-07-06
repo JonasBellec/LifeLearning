@@ -57,7 +57,7 @@ public class RealUniverse implements IRealUniverse<State, Action> {
 
 		for (Agent agent : agents) {
 			agent.life();
-			if (agent.getAlive()) {
+			if (agent.isAlive()) {
 				Action action = policy.determineActionWithLearning(this, agent);
 				agent.act(action);
 				logger.log(Level.INFO, agent.toString() + " => " + action.toString());

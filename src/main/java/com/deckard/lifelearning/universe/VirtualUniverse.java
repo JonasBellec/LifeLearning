@@ -1,10 +1,8 @@
 package com.deckard.lifelearning.universe;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.deckard.lifelearning.model.Action;
-import com.deckard.lifelearning.model.Agent;
 import com.deckard.lifelearning.model.State;
 import com.deckard.qlearning.space.Observation;
 import com.deckard.qlearning.space.ObservationSpace;
@@ -15,28 +13,21 @@ public class VirtualUniverse implements IVirtualUniverse<State, Action> {
 
 	private Time time;
 	private IAgent<State, Action> owner;
-	private List<Agent> listAgent;
+	private IAgent<State, Action> virtualOwner;
 
 	private ObservationSpace<State> observationSpace;
 
 	public VirtualUniverse(RealUniverse realUniverse, IAgent<State, Action> owner) {
 		this.owner = owner;
 		this.time = new Time(realUniverse.getTime());
-		this.listAgent = new ArrayList<>();
-		for (Agent agent : realUniverse.getAgents()) {
-			listAgent.add(new Agent(agent));
-		}
-
+		this.virtualOwner = owner.virtualize();
 		this.observationSpace = new ObservationSpace<>();
 	}
 
 	@Override
 	public void step() {
 		time.tick();
-
-		for (Agent agent : listAgent) {
-			agent.life();
-		}
+		virtualOwner.life();
 	}
 
 	@Override
@@ -51,5 +42,13 @@ public class VirtualUniverse implements IVirtualUniverse<State, Action> {
 	@Override
 	public IAgent<State, Action> getOwner() {
 		return owner;
+	}
+
+	/**
+	 * @return the virtualOwner
+	 */
+	@Override
+	public IAgent<State, Action> getVirtualOwner() {
+		return virtualOwner;
 	}
 }
