@@ -44,7 +44,7 @@ public class LifeLearning {
 		}
 
 		PolicyConfiguration<State, Action> policyConfiguration = new PolicyConfiguration<>(State.class, Action.class,
-				100, 0.2);
+				10, 0.2);
 		IPolicy<State, Action> policy = new QLearningPolicy<>(policyConfiguration, neuralNetworkPredictor);
 
 		for (int k = 0; k < 50; k++) {
@@ -55,15 +55,15 @@ public class LifeLearning {
 			for (int i = 0; i < 24 * days; i++) {
 				realUniverse.step();
 
-				if (i % 10 == 0) {
+				if (i % 24 == 0) {
 					log(realUniverse, i);
 				}
 			}
 
 			log(realUniverse, 240);
-		}
 
-		NeuralNetworkPredictor.save(neuralNetworkPredictor, "configuration.json", "parameters.txt");
+			NeuralNetworkPredictor.save(neuralNetworkPredictor, "configuration.json", "parameters.txt");
+		}
 	}
 
 	private static void log(RealUniverse realUniverse, int tick) {
@@ -92,9 +92,25 @@ public class LifeLearning {
 
 	private static NeuralNetworkPredictor<State, Action> createNewNeuralNetworkPredictor() {
 		int seed = 123;
-		double learningRate = 0.01;
+		double learningRate = 0.1;
 
-		int numHiddenNodes = 20;
+		int numHiddenNodes = 10;
+
+		// MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed).iterations(1)
+		// .activation(Activation.TANH).weightInit(WeightInit.XAVIER)
+		// .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate)
+		// .updater(Updater.NESTEROVS).momentum(0.9).regularization(true).l2(1e-4).list()
+		// .layer(0,
+		// new DenseLayer.Builder().nIn(StateSpace.getInstance(State.class).size()).nOut(numHiddenNodes)
+		// .weightInit(WeightInit.XAVIER).activation(Activation.RELU).build())
+		// .layer(1,
+		// new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes).weightInit(WeightInit.XAVIER)
+		// .activation(Activation.RELU).build())
+		// .layer(2,
+		// new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+		// .activation(Activation.SOFTMAX).nIn(numHiddenNodes)
+		// .nOut(ActionSpace.getInstance(Action.class).size()).build())
+		// .backprop(true).pretrain(false).build();
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed).iterations(1)
 				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate)
@@ -108,6 +124,6 @@ public class LifeLearning {
 								.nOut(ActionSpace.getInstance(Action.class).size()).build())
 				.pretrain(false).backprop(true).build();
 
-		return new NeuralNetworkPredictor<>(conf, State.class, Action.class);
+		return new NeuralNetworkPredictor<>(conf, State.class, Action.class, 0.9);
 	}
 }

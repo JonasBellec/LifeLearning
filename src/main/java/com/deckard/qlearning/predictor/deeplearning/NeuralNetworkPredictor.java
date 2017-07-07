@@ -13,6 +13,8 @@ import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.api.preprocessor.NormalizerStandardize;
 import org.nd4j.linalg.factory.Nd4j;
 
 import com.deckard.qlearning.predictor.IPredictor;
@@ -30,17 +32,19 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 	private double discount;
 	private StateSpace<S> stateSpace;
 	private ActionSpace<A> actionSpace;
+	private boolean ready = false;
 
-	private NeuralNetworkPredictor(Class<S> classState, Class<A> classAction) {
+	private NormalizerStandardize normalizerMinMaxScaler = new NormalizerStandardize();
+
+	private NeuralNetworkPredictor(Class<S> classState, Class<A> classAction, double discount) {
 		this.stateSpace = StateSpace.getInstance(classState);
 		this.actionSpace = ActionSpace.getInstance(classAction);
-
-		discount = 0.8;
+		this.discount = discount;
 	}
 
 	public NeuralNetworkPredictor(MultiLayerConfiguration multiLayerConfiguration, Class<S> classState,
-			Class<A> classAction) {
-		this(classState, classAction);
+			Class<A> classAction, double discount) {
+		this(classState, classAction, discount);
 		this.multiLayerNetworkSource = new MultiLayerNetwork(multiLayerConfiguration);
 		this.multiLayerNetworkSource.init();
 		this.multiLayerNetworkTarget = new MultiLayerNetwork(multiLayerConfiguration);
@@ -50,10 +54,18 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 
 	@Override
 	public A predictAction(ObservationSpace<S> observationSpace) {
-		INDArray arrayInput = createArrayFromObservedSpace(observationSpace);
-		INDArray arrayOutput = multiLayerNetworkSource.output(arrayInput);
+		if (ready) {
+			INDArray arrayInput = createArrayFromObservedSpace(observationSpace);
+			normalizerMinMaxScaler.transform(arrayInput);
 
-		return actionSpace.decode(Nd4j.argMax(arrayOutput, Integer.MAX_VALUE).getInt(0));
+			INDArray arrayOutput = multiLayerNetworkSource.output(arrayInput);
+
+			int code = Nd4j.argMax(arrayOutput, Integer.MAX_VALUE).getInt(0);
+
+			return actionSpace.decode(code);
+		} else {
+			return actionSpace.random();
+		}
 	}
 
 	@Override
@@ -70,6 +82,12 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 		INDArray arrayInputSource = createArrayFromObservedSpace(observationSpacesSource);
 		INDArray arrayInputTarget = createArrayFromObservedSpace(observationSpacesTarget);
 
+		DataSet dataSet = new DataSet(arrayInputSource, null);
+		normalizerMinMaxScaler.fit(dataSet);
+		ready = true;
+		normalizerMinMaxScaler.transform(arrayInputSource);
+		normalizerMinMaxScaler.transform(arrayInputTarget);
+
 		INDArray arrayOutputSource = multiLayerNetworkSource.output(arrayInputSource);
 		INDArray arrayOutputTarget = multiLayerNetworkTarget.output(arrayInputTarget);
 
@@ -78,8 +96,14 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 		for (int i = 0; i < transitions.size(); i++) {
 			Transition<S, A> transition = transitions.get(i);
 
-			double rewardTarget = transition.getReward()
-					+ discount * arrayOutputTarget.getDouble(i, arrayMaxAction.getInt(i));
+			double rewardTarget;
+
+			if (transition.getReward() < 0) {
+				rewardTarget = transition.getReward();
+			} else {
+				rewardTarget = transition.getReward()
+						+ discount * arrayOutputTarget.getDouble(i, arrayMaxAction.getInt(i));
+			}
 
 			arrayOutputSource.putScalar(i, transition.getAction().encode(), rewardTarget);
 		}
@@ -104,7 +128,10 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 	}
 
 	private INDArray createArrayFromObservedSpace(ObservationSpace<S> observationSpace) {
-		return Nd4j.create(observationSpace.encode());
+
+		double[] space = observationSpace.encode();
+		INDArray array = Nd4j.create(space);
+		return array;
 	}
 
 	public static void save(NeuralNetworkPredictor<?, ?> predictor, String configuration, String parameters) {
@@ -125,7 +152,8 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 			MultiLayerConfiguration multiLayerConfiguration = MultiLayerConfiguration
 					.fromJson(FileUtils.readFileToString(new File(configuration)));
 
-			NeuralNetworkPredictor<S, A> neuralNetworkPredictor = new NeuralNetworkPredictor<>(classState, classAction);
+			NeuralNetworkPredictor<S, A> neuralNetworkPredictor = new NeuralNetworkPredictor<>(classState, classAction,
+					0.9);
 			neuralNetworkPredictor.multiLayerNetworkSource = new MultiLayerNetwork(multiLayerConfiguration);
 			neuralNetworkPredictor.multiLayerNetworkSource.init();
 			neuralNetworkPredictor.multiLayerNetworkSource.setParameters(Nd4j.read(dis));

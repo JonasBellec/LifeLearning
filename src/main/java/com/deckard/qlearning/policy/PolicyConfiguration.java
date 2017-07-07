@@ -13,10 +13,6 @@ public class PolicyConfiguration<S extends Enum<S> & IState, A extends Enum<A> &
 	private int projectionDeep;
 	private double epsilon;
 
-	public PolicyConfiguration(Class<S> classState, Class<A> classAction) {
-		this(classState, classAction, 10, 0.2);
-	}
-
 	public PolicyConfiguration(Class<S> classState, Class<A> classAction, int projectionDeep, double epsilon) {
 		this.stateSpace = StateSpace.getInstance(classState);
 		this.actionSpace = ActionSpace.getInstance(classAction);

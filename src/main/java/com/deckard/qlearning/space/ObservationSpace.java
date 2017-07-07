@@ -20,7 +20,17 @@ public class ObservationSpace<S extends IState> extends ArrayList<Observation<S,
 	}
 
 	private double encode(Object value) {
-		return 0;
+		if (value != null) {
+			if (value.getClass().isPrimitive()) {
+				return (double) value;
+			} else if (value instanceof Number) {
+				return ((Number) value).doubleValue();
+			} else {
+				return 0;
+			}
+		} else {
+			return 0;
+		}
 	}
 
 }
