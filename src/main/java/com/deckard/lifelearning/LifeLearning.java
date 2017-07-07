@@ -43,17 +43,30 @@ public class LifeLearning {
 			neuralNetworkPredictor = createNewNeuralNetworkPredictor();
 		}
 
-		PolicyConfiguration<State, Action> policyConfiguration = new PolicyConfiguration<>(State.class, Action.class);
+		PolicyConfiguration<State, Action> policyConfiguration = new PolicyConfiguration<>(State.class, Action.class,
+				100, 0.2);
 		IPolicy<State, Action> policy = new QLearningPolicy<>(policyConfiguration, neuralNetworkPredictor);
 
-		RealUniverse realUniverse = new RealUniverse(policy, 1000);
+		for (int k = 0; k < 50; k++) {
+			RealUniverse realUniverse = new RealUniverse(policy, 1000);
 
-		Integer days = 10;
+			Integer days = 10;
 
-		for (int i = 0; i < 24 * days; i++) {
-			realUniverse.step();
+			for (int i = 0; i < 24 * days; i++) {
+				realUniverse.step();
+
+				if (i % 10 == 0) {
+					log(realUniverse, i);
+				}
+			}
+
+			log(realUniverse, 240);
 		}
 
+		NeuralNetworkPredictor.save(neuralNetworkPredictor, "configuration.json", "parameters.txt");
+	}
+
+	private static void log(RealUniverse realUniverse, int tick) {
 		int alive = 0;
 		int dead = 0;
 		double rewardTotal = 0;
@@ -73,16 +86,15 @@ public class LifeLearning {
 			rewardAverage = rewardTotal / alive;
 		}
 
-		logger.log(Level.INFO, String.format("alive : %d, dead : %d, averageReward : %f", alive, dead, rewardAverage));
-
-		NeuralNetworkPredictor.save(neuralNetworkPredictor, "configuration.json", "parameters.txt");
+		logger.log(Level.INFO, String.format("%d/%d => alive : %d, dead : %d, averageReward : %f", tick / 24, tick % 24,
+				alive, dead, rewardAverage));
 	}
 
 	private static NeuralNetworkPredictor<State, Action> createNewNeuralNetworkPredictor() {
 		int seed = 123;
 		double learningRate = 0.01;
 
-		int numHiddenNodes = 30;
+		int numHiddenNodes = 20;
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed).iterations(1)
 				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate)

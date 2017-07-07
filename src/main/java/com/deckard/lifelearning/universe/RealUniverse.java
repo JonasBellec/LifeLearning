@@ -2,7 +2,6 @@ package com.deckard.lifelearning.universe;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.deckard.lifelearning.model.Action;
@@ -60,7 +59,7 @@ public class RealUniverse implements IRealUniverse<State, Action> {
 			if (agent.isAlive()) {
 				Action action = policy.determineActionWithLearning(this, agent);
 				agent.act(action);
-				logger.log(Level.INFO, agent.toString() + " => " + action.toString());
+				// logger.log(Level.INFO, agent.toString() + " => " + action.toString());
 			}
 		}
 	}
