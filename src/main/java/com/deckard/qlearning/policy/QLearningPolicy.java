@@ -67,18 +67,31 @@ public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAc
 				&& virtualUniverse.getVirtualOwner().isAlive()) {
 			Transition<S, A> transition = new Transition<>();
 
-			ObservationSpace<S> observationSpaceSource = determineObservationSpace(virtualUniverse,
+			int previous = virtualUniverse.getVirtualOwner().computeReward();
+
+			ObservationSpace<S> observationSpacePrevious = determineObservationSpace(virtualUniverse,
 					virtualUniverse.getVirtualOwner());
 
-			transition.setObservationSpaceSource(observationSpaceSource);
-			A action = predictor.predictAction(observationSpaceSource);
+			transition.setObservationSpacePrevious(observationSpacePrevious);
+			A action = predictor.predictAction(observationSpacePrevious);
 			transition.setAction(action);
 			virtualUniverse.getVirtualOwner().act(action);
 
 			virtualUniverse.step();
 
-			transition.setReward(virtualUniverse.getVirtualOwner().computeReward());
-			transition.setObservationSpaceTarget(
+			int after = virtualUniverse.getVirtualOwner().computeReward();
+
+			if (after == 0) {
+				transition.setReward(-1);
+			} else if (after < previous) {
+				transition.setReward(0);
+			} else if (after == previous) {
+				transition.setReward(0.5);
+			} else {
+				transition.setReward(1);
+			}
+
+			transition.setObservationSpaceNext(
 					determineObservationSpace(virtualUniverse, virtualUniverse.getVirtualOwner()));
 
 			transitions.add(transition);

@@ -7,7 +7,6 @@ public enum State implements IState {
 	NEED1("need1", false),
 	NEED2("need2", false),
 	NEED3("need3", false),
-	HAPPINESS("happiness", false),
 	DAY("day", true),
 	HOUR("hour", true);
 
@@ -38,5 +37,4 @@ public enum State implements IState {
 	public boolean isAgentState() {
 		return !universeState;
 	}
-
 }

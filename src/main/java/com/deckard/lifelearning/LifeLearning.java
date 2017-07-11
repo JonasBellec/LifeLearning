@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.weights.WeightInit;
@@ -43,8 +42,14 @@ public class LifeLearning {
 			neuralNetworkPredictor = createNewNeuralNetworkPredictor();
 		}
 
+		// UIServer uiServer = UIServer.getInstance();
+		// StatsStorage statsStorage = new InMemoryStatsStorage(); // Alternative: new FileStatsStorage(File), for
+		// uiServer.attach(statsStorage);
+		// neuralNetworkPredictor.getMultiLayerNetworkSource().setListeners(new StatsListener(statsStorage));
+		// neuralNetworkPredictor.getMultiLayerNetworkTarget().setListeners(new StatsListener(statsStorage));
+
 		PolicyConfiguration<State, Action> policyConfiguration = new PolicyConfiguration<>(State.class, Action.class,
-				10, 0.2);
+				100, 0.2);
 		IPolicy<State, Action> policy = new QLearningPolicy<>(policyConfiguration, neuralNetworkPredictor);
 
 		for (int k = 0; k < 50; k++) {
@@ -56,7 +61,11 @@ public class LifeLearning {
 				realUniverse.step();
 
 				if (i % 24 == 0) {
-					log(realUniverse, i);
+					int alive = log(realUniverse, i);
+
+					if (alive <= 0) {
+						break;
+					}
 				}
 			}
 
@@ -66,7 +75,7 @@ public class LifeLearning {
 		}
 	}
 
-	private static void log(RealUniverse realUniverse, int tick) {
+	private static int log(RealUniverse realUniverse, int tick) {
 		int alive = 0;
 		int dead = 0;
 		double rewardTotal = 0;
@@ -88,13 +97,15 @@ public class LifeLearning {
 
 		logger.log(Level.INFO, String.format("%d/%d => alive : %d, dead : %d, averageReward : %f", tick / 24, tick % 24,
 				alive, dead, rewardAverage));
+
+		return alive;
 	}
 
 	private static NeuralNetworkPredictor<State, Action> createNewNeuralNetworkPredictor() {
 		int seed = 123;
-		double learningRate = 0.1;
+		double learningRate = 0.01;
 
-		int numHiddenNodes = 10;
+		int numHiddenNodes = 20;
 
 		// MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed).iterations(1)
 		// .activation(Activation.TANH).weightInit(WeightInit.XAVIER)
@@ -107,14 +118,13 @@ public class LifeLearning {
 		// new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes).weightInit(WeightInit.XAVIER)
 		// .activation(Activation.RELU).build())
 		// .layer(2,
-		// new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+		// new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
 		// .activation(Activation.SOFTMAX).nIn(numHiddenNodes)
 		// .nOut(ActionSpace.getInstance(Action.class).size()).build())
 		// .backprop(true).pretrain(false).build();
 
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed).iterations(1)
-				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate)
-				.updater(Updater.NESTEROVS).momentum(0.9).list()
+				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate).list()
 				.layer(0,
 						new DenseLayer.Builder().nIn(StateSpace.getInstance(State.class).size()).nOut(numHiddenNodes)
 								.weightInit(WeightInit.XAVIER).activation(Activation.RELU).build())
@@ -124,6 +134,6 @@ public class LifeLearning {
 								.nOut(ActionSpace.getInstance(Action.class).size()).build())
 				.pretrain(false).backprop(true).build();
 
-		return new NeuralNetworkPredictor<>(conf, State.class, Action.class, 0.9);
+		return new NeuralNetworkPredictor<>(conf, State.class, Action.class, 0.8);
 	}
 }

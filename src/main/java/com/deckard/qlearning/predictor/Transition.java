@@ -5,39 +5,39 @@ import com.deckard.qlearning.space.IState;
 import com.deckard.qlearning.space.ObservationSpace;
 
 public class Transition<S extends IState, A extends IAction> {
-	ObservationSpace<S> observationSpaceSource;
-	ObservationSpace<S> observationSpaceTarget;
+	ObservationSpace<S> observationSpacePrevious;
+	ObservationSpace<S> observationSpaceNext;
 	A action;
 	double reward;
 
 	/**
-	 * @return the observationSpaceSource
+	 * @return the observationSpacePrevious
 	 */
-	public ObservationSpace<S> getObservationSpaceSource() {
-		return observationSpaceSource;
+	public ObservationSpace<S> getObservationSpacePrevious() {
+		return observationSpacePrevious;
 	}
 
 	/**
-	 * @param observationSpaceSource
-	 *            the observationSpaceSource to set
+	 * @param observationSpacePrevious
+	 *            the observationSpacePrevious to set
 	 */
-	public void setObservationSpaceSource(ObservationSpace<S> observationSpaceSource) {
-		this.observationSpaceSource = observationSpaceSource;
+	public void setObservationSpacePrevious(ObservationSpace<S> observationSpacePrevious) {
+		this.observationSpacePrevious = observationSpacePrevious;
 	}
 
 	/**
-	 * @return the observationSpaceTarget
+	 * @return the observationSpaceNext
 	 */
-	public ObservationSpace<S> getObservationSpaceTarget() {
-		return observationSpaceTarget;
+	public ObservationSpace<S> getObservationSpaceNext() {
+		return observationSpaceNext;
 	}
 
 	/**
-	 * @param observationSpaceTarget
-	 *            the observationSpaceTarget to set
+	 * @param observationSpaceNext
+	 *            the observationSpaceNext to set
 	 */
-	public void setObservationSpaceTarget(ObservationSpace<S> observationSpaceTarget) {
-		this.observationSpaceTarget = observationSpaceTarget;
+	public void setObservationSpaceNext(ObservationSpace<S> observationSpaceNext) {
+		this.observationSpaceNext = observationSpaceNext;
 	}
 
 	/**

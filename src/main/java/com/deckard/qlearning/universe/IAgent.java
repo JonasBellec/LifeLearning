@@ -13,7 +13,7 @@ public interface IAgent<S extends Enum<S> & IState, A extends Enum<A> & IAction>
 
 	void act(A action);
 
-	double computeReward();
+	int computeReward();
 
 	public IAgent<S, A> virtualize();
 

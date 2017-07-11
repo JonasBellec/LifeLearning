@@ -22,9 +22,9 @@ public class ObservationSpace<S extends IState> extends ArrayList<Observation<S,
 	private double encode(Object value) {
 		if (value != null) {
 			if (value.getClass().isPrimitive()) {
-				return (double) value;
+				return (double) value / 100;
 			} else if (value instanceof Number) {
-				return ((Number) value).doubleValue();
+				return ((Number) value).doubleValue() / 100;
 			} else {
 				return 0;
 			}

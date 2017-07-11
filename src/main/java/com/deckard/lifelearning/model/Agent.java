@@ -3,7 +3,6 @@ package com.deckard.lifelearning.model;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.apache.commons.lang3.RandomUtils;
 
@@ -14,13 +13,10 @@ import com.deckard.qlearning.universe.IAgent;
 public class Agent implements IAgent<State, Action> {
 
 	private Map<Need, Integer> mapNeed;
-	private Integer happiness;
 	private Integer ticks;
 	private boolean alive;
 
 	private ObservationSpace<State> observationSpace;
-
-	private Logger logger = Logger.getLogger(Agent.class.getSimpleName());
 
 	public Agent() {
 		this.mapNeed = new HashMap<>();
@@ -28,7 +24,6 @@ public class Agent implements IAgent<State, Action> {
 		this.mapNeed.put(Need.NEED2, RandomUtils.nextInt() % 10 + 5);
 		this.mapNeed.put(Need.NEED3, RandomUtils.nextInt() % 10 + 5);
 
-		this.happiness = 0;
 		this.ticks = 0;
 		this.alive = true;
 
@@ -41,7 +36,6 @@ public class Agent implements IAgent<State, Action> {
 		this.mapNeed.put(Need.NEED2, agent.mapNeed.get(Need.NEED2));
 		this.mapNeed.put(Need.NEED3, agent.mapNeed.get(Need.NEED3));
 
-		this.happiness = agent.happiness;
 		this.ticks = agent.ticks;
 		this.alive = agent.alive;
 
@@ -59,7 +53,6 @@ public class Agent implements IAgent<State, Action> {
 		observationSpace.add(new Observation<State, Integer>(State.NEED1, mapNeed.get(Need.NEED1)));
 		observationSpace.add(new Observation<State, Integer>(State.NEED2, mapNeed.get(Need.NEED2)));
 		observationSpace.add(new Observation<State, Integer>(State.NEED3, mapNeed.get(Need.NEED3)));
-		observationSpace.add(new Observation<State, Integer>(State.HAPPINESS, happiness));
 
 		return observationSpace;
 	}
@@ -77,8 +70,6 @@ public class Agent implements IAgent<State, Action> {
 			for (Integer needScore : mapNeed.values()) {
 				if (needScore <= 0) {
 					alive = false;
-					happiness = -1000;
-					// logger.log(Level.INFO, this.toString() + " => Dead");
 				}
 			}
 		}
@@ -86,20 +77,19 @@ public class Agent implements IAgent<State, Action> {
 
 	@Override
 	public void act(Action action) {
-		if (action == Action.ACTION4) {
-			happiness += 10;
-		} else {
-			Integer oldScore = mapNeed.get(action.getNeed());
+		Integer oldScore = mapNeed.get(action.getNeed());
+
+		if (oldScore < 10) {
 			mapNeed.put(action.getNeed(), oldScore + 4);
 		}
 	}
 
 	@Override
-	public double computeReward() {
-		if (happiness < 0) {
-			return happiness;
+	public int computeReward() {
+		if (alive) {
+			return (mapNeed.get(Need.NEED1) + mapNeed.get(Need.NEED2) + mapNeed.get(Need.NEED3));
 		} else {
-			return happiness / ticks;
+			return 0;
 		}
 	}
 
@@ -118,6 +108,6 @@ public class Agent implements IAgent<State, Action> {
 	 */
 	@Override
 	public String toString() {
-		return "Agent [mapNeed=" + mapNeed + ", happiness=" + happiness + ", ticks=" + ticks + ", alive=" + alive;
+		return "Agent [mapNeed=" + mapNeed + ", ticks=" + ticks + ", alive=" + alive;
 	}
 }
