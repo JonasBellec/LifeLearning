@@ -4,8 +4,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.GradientNormalization;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.weights.WeightInit;
@@ -107,26 +109,12 @@ public class LifeLearning {
 
 		int numHiddenNodes = 20;
 
-		// MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed).iterations(1)
-		// .activation(Activation.TANH).weightInit(WeightInit.XAVIER)
-		// .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate)
-		// .updater(Updater.NESTEROVS).momentum(0.9).regularization(true).l2(1e-4).list()
-		// .layer(0,
-		// new DenseLayer.Builder().nIn(StateSpace.getInstance(State.class).size()).nOut(numHiddenNodes)
-		// .weightInit(WeightInit.XAVIER).activation(Activation.RELU).build())
-		// .layer(1,
-		// new DenseLayer.Builder().nIn(numHiddenNodes).nOut(numHiddenNodes).weightInit(WeightInit.XAVIER)
-		// .activation(Activation.RELU).build())
-		// .layer(2,
-		// new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD)
-		// .activation(Activation.SOFTMAX).nIn(numHiddenNodes)
-		// .nOut(ActionSpace.getInstance(Action.class).size()).build())
-		// .backprop(true).pretrain(false).build();
-
 		MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().seed(seed).iterations(1)
-				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate).list()
+				.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).learningRate(learningRate)
+				.updater(Updater.NESTEROVS).regularization(true).l2(1e-4).list()
 				.layer(0,
 						new DenseLayer.Builder().nIn(StateSpace.getInstance(State.class).size()).nOut(numHiddenNodes)
+								.gradientNormalization(GradientNormalization.RenormalizeL2PerLayer)
 								.weightInit(WeightInit.XAVIER).activation(Activation.RELU).build())
 				.layer(1,
 						new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD).weightInit(WeightInit.XAVIER)
