@@ -8,7 +8,9 @@ import com.deckard.qlearning.space.ObservationSpace;
 
 public interface IPredictor<S extends Enum<S> & IState, A extends Enum<A> & IAction> {
 
-	A predictAction(ObservationSpace<S> observationSpace);
+	public A predict(ObservationSpace<S> observationSpace);
 
-	void train(List<Transition<S, A>> transitions);
+	public void updateMultiLayerNetworkFrozen();
+
+	public void train(List<Experience<S, A>> experiences, double discount);
 }

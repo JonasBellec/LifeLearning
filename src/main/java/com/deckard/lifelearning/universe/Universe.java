@@ -2,7 +2,6 @@ package com.deckard.lifelearning.universe;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import com.deckard.lifelearning.model.Action;
 import com.deckard.lifelearning.model.Agent;
@@ -10,11 +9,9 @@ import com.deckard.lifelearning.model.State;
 import com.deckard.qlearning.policy.IPolicy;
 import com.deckard.qlearning.space.Observation;
 import com.deckard.qlearning.space.ObservationSpace;
-import com.deckard.qlearning.universe.IAgent;
-import com.deckard.qlearning.universe.IRealUniverse;
-import com.deckard.qlearning.universe.IVirtualUniverse;
+import com.deckard.qlearning.universe.IUniverse;
 
-public class RealUniverse implements IRealUniverse<State, Action> {
+public class Universe implements IUniverse<State, Action> {
 
 	private Time time;
 	private List<Agent> agents;
@@ -22,9 +19,11 @@ public class RealUniverse implements IRealUniverse<State, Action> {
 
 	private ObservationSpace<State> observationSpace;
 
-	private Logger logger = Logger.getLogger(RealUniverse.class.getSimpleName());
+	int action1 = 0;
+	int action2 = 0;
+	int action3 = 0;
 
-	public RealUniverse(IPolicy<State, Action> policy, Integer numberAgent) {
+	public Universe(IPolicy<State, Action> policy, Integer numberAgent) {
 		this.policy = policy;
 		this.time = new Time();
 
@@ -46,22 +45,29 @@ public class RealUniverse implements IRealUniverse<State, Action> {
 	}
 
 	@Override
-	public IVirtualUniverse<State, Action> virtualize(IAgent<State, Action> agent) {
-		return new VirtualUniverse(this, agent);
-	}
-
-	@Override
 	public void step() {
 		time.tick();
 
 		for (Agent agent : agents) {
-			agent.life();
 			if (agent.isAlive()) {
-				Action action = policy.determineActionWithLearning(this, agent);
-				agent.act(action);
-				// logger.log(Level.INFO, agent.toString() + " => " + action.toString());
+				agent.life();
+				Action action = policy.determineAction(this, agent);
+				if (action != null) {
+					if (action == Action.ACTION1) {
+						action1++;
+					} else if (action == Action.ACTION2) {
+						action2++;
+					} else if (action == Action.ACTION3) {
+						action3++;
+					}
+
+					agent.act(action);
+				}
 			}
 		}
+
+		policy.learnFromCollectiveMemory();
+		System.out.println(String.format("action1 : %d, action2 : %d, action3 : %d", action1, action2, action3));
 	}
 
 	/**

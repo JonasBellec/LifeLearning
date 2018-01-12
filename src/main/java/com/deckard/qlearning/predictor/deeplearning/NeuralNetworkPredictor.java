@@ -18,8 +18,8 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.NDArrayFactory;
 import org.nd4j.linalg.factory.Nd4j;
 
+import com.deckard.qlearning.predictor.Experience;
 import com.deckard.qlearning.predictor.IPredictor;
-import com.deckard.qlearning.predictor.Transition;
 import com.deckard.qlearning.space.ActionSpace;
 import com.deckard.qlearning.space.IAction;
 import com.deckard.qlearning.space.IState;
@@ -28,16 +28,18 @@ import com.deckard.qlearning.space.StateSpace;
 
 public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A> & IAction>
 		implements IPredictor<S, A> {
-	private MultiLayerNetwork multiLayerNetworkSource;
-	private MultiLayerNetwork multiLayerNetworkTarget;
-	private double discount;
+	private MultiLayerNetwork multiLayerNetworkTraining;
+	private MultiLayerNetwork multiLayerNetworkFrozen;
 	private StateSpace<S> stateSpace;
 	private ActionSpace<A> actionSpace;
 
-	private NeuralNetworkPredictor(Class<S> classState, Class<A> classAction, double discount) {
+	int action1 = 0;
+	int action2 = 0;
+	int action3 = 0;
+
+	private NeuralNetworkPredictor(Class<S> classState, Class<A> classAction) {
 		this.stateSpace = StateSpace.getInstance(classState);
 		this.actionSpace = ActionSpace.getInstance(classAction);
-		this.discount = discount;
 
 		DataTypeUtil.setDTypeForContext(DataBuffer.Type.DOUBLE);
 
@@ -46,65 +48,82 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 	}
 
 	public NeuralNetworkPredictor(MultiLayerConfiguration multiLayerConfiguration, Class<S> classState,
-			Class<A> classAction, double discount) {
-		this(classState, classAction, discount);
-		this.multiLayerNetworkSource = new MultiLayerNetwork(multiLayerConfiguration);
-		this.multiLayerNetworkSource.init();
-		this.multiLayerNetworkTarget = new MultiLayerNetwork(multiLayerConfiguration);
-		this.multiLayerNetworkTarget.init();
-		this.multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
+			Class<A> classAction) {
+		this(classState, classAction);
+		this.multiLayerNetworkTraining = new MultiLayerNetwork(multiLayerConfiguration);
+		this.multiLayerNetworkTraining.init();
+		this.multiLayerNetworkFrozen = new MultiLayerNetwork(multiLayerConfiguration);
+		this.multiLayerNetworkFrozen.init();
+		this.multiLayerNetworkFrozen.setParams(multiLayerNetworkTraining.params());
 	}
 
 	@Override
-	public A predictAction(ObservationSpace<S> observationSpace) {
+	public A predict(ObservationSpace<S> observationSpace) {
 		INDArray arrayInput = createArrayFromObservedSpace(observationSpace);
-		INDArray arrayOutput = multiLayerNetworkSource.output(arrayInput);
-
+		INDArray arrayOutput = multiLayerNetworkFrozen.output(arrayInput);
 		int code = Nd4j.argMax(arrayOutput, Integer.MAX_VALUE).getInt(0);
-
 		return actionSpace.decode(code);
 	}
 
 	@Override
-	public void train(List<Transition<S, A>> transitions) {
+	public void updateMultiLayerNetworkFrozen() {
+		multiLayerNetworkFrozen.setParams(multiLayerNetworkTraining.params());
+	}
+
+	@Override
+	public void train(List<Experience<S, A>> experiences, double discount) {
 
 		List<ObservationSpace<S>> observationSpacesPrevious = new ArrayList<>();
 		List<ObservationSpace<S>> observationSpacesNext = new ArrayList<>();
 
-		for (Transition<S, A> transition : transitions) {
-			observationSpacesPrevious.add(transition.getObservationSpacePrevious());
-			observationSpacesNext.add(transition.getObservationSpaceNext());
+		for (Experience<S, A> experience : experiences) {
+			observationSpacesPrevious.add(experience.getObservationSpacePrevious());
+			observationSpacesNext.add(experience.getObservationSpaceNext());
 		}
 
 		INDArray arrayInputPrevious = createArrayFromObservedSpace(observationSpacesPrevious);
 		INDArray arrayInputNext = createArrayFromObservedSpace(observationSpacesNext);
 
-		INDArray arrayOutputPrevious = multiLayerNetworkSource.output(arrayInputPrevious);
-		INDArray arrayOutputNext = multiLayerNetworkTarget.output(arrayInputNext);
+		INDArray arrayOutputPrevious = multiLayerNetworkTraining.output(arrayInputPrevious);
+		INDArray arrayOutputNext = multiLayerNetworkTraining.output(arrayInputNext);
 
 		INDArray arrayNext = Nd4j.argMax(arrayOutputNext, 1);
 
-		for (int i = 0; i < transitions.size(); i++) {
-			Transition<S, A> transition = transitions.get(i);
+		for (int i = 0; i < experiences.size(); i++) {
+			Experience<S, A> experience = experiences.get(i);
 
-			double rewardNext = arrayOutputNext.getDouble(i, arrayNext.getInt(i));
-			double rewardTarget;
-
-			if (transition.getReward() < 0) {
-				rewardTarget = transition.getReward();
-			} else {
-				rewardTarget = (transition.getReward() + discount * rewardNext) / (1 + discount);
+			if (arrayNext.getInt(i) == 0) {
+				action1++;
+			} else if (arrayNext.getInt(i) == 1) {
+				action2++;
+			} else if (arrayNext.getInt(i) == 2) {
+				action3++;
 			}
 
-			arrayOutputPrevious.putScalar(i, transition.getAction().encode(), rewardTarget);
+			double rewardCurrent;
+			double rewardNext = arrayOutputNext.getDouble(i, arrayNext.getInt(i));
+			double rewardCorrected;
+
+			if (experience.getHappinessAfter() == 0) {
+				rewardCurrent = -1;
+			} else if (experience.getHappinessAfter() < experience.getHappinessBefore()) {
+				rewardCurrent = 0;
+			} else if (experience.getHappinessAfter() == experience.getHappinessBefore()) {
+				rewardCurrent = 0.5;
+			} else {
+				rewardCurrent = 1;
+			}
+
+			if (rewardCurrent < 0) {
+				rewardCorrected = rewardCurrent;
+			} else {
+				rewardCorrected = (rewardCurrent + discount * rewardNext) / (1 + discount);
+			}
+
+			arrayOutputPrevious.putScalar(i, experience.getAction().encode(), rewardCorrected);
 		}
 
-		multiLayerNetworkSource.fit(arrayInputPrevious, arrayOutputPrevious);
-		updateMultiLayerNetworkTarget();
-	}
-
-	public void updateMultiLayerNetworkTarget() {
-		multiLayerNetworkTarget.setParams(multiLayerNetworkSource.params());
+		multiLayerNetworkTraining.fit(arrayInputPrevious, arrayOutputPrevious);
 	}
 
 	private INDArray createArrayFromObservedSpace(List<ObservationSpace<S>> observationSpaces) {
@@ -119,17 +138,15 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 	}
 
 	private INDArray createArrayFromObservedSpace(ObservationSpace<S> observationSpace) {
-
 		double[] space = observationSpace.encode();
-		INDArray array = Nd4j.create(space);
-		return array;
+		return Nd4j.create(space);
 	}
 
 	public static void save(NeuralNetworkPredictor<?, ?> predictor, String configuration, String parameters) {
 		try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get(parameters)))) {
-			Nd4j.write(predictor.multiLayerNetworkSource.params(), dos);
+			Nd4j.write(predictor.multiLayerNetworkTraining.params(), dos);
 			FileUtils.write(new File(configuration),
-					predictor.multiLayerNetworkSource.getLayerWiseConfigurations().toJson());
+					predictor.multiLayerNetworkTraining.getLayerWiseConfigurations().toJson());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -143,33 +160,18 @@ public class NeuralNetworkPredictor<S extends Enum<S> & IState, A extends Enum<A
 			MultiLayerConfiguration multiLayerConfiguration = MultiLayerConfiguration
 					.fromJson(FileUtils.readFileToString(new File(configuration)));
 
-			NeuralNetworkPredictor<S, A> neuralNetworkPredictor = new NeuralNetworkPredictor<>(classState, classAction,
-					0.8);
-			neuralNetworkPredictor.multiLayerNetworkSource = new MultiLayerNetwork(multiLayerConfiguration);
-			neuralNetworkPredictor.multiLayerNetworkSource.init();
-			neuralNetworkPredictor.multiLayerNetworkSource.setParameters(Nd4j.read(dis));
-			neuralNetworkPredictor.multiLayerNetworkTarget = new MultiLayerNetwork(multiLayerConfiguration);
-			neuralNetworkPredictor.multiLayerNetworkTarget.init();
-			neuralNetworkPredictor.multiLayerNetworkTarget
-					.setParams(neuralNetworkPredictor.multiLayerNetworkSource.params());
+			NeuralNetworkPredictor<S, A> neuralNetworkPredictor = new NeuralNetworkPredictor<>(classState, classAction);
+			neuralNetworkPredictor.multiLayerNetworkTraining = new MultiLayerNetwork(multiLayerConfiguration);
+			neuralNetworkPredictor.multiLayerNetworkTraining.init();
+			neuralNetworkPredictor.multiLayerNetworkTraining.setParameters(Nd4j.read(dis));
+			neuralNetworkPredictor.multiLayerNetworkFrozen = new MultiLayerNetwork(multiLayerConfiguration);
+			neuralNetworkPredictor.multiLayerNetworkFrozen.init();
+			neuralNetworkPredictor.multiLayerNetworkFrozen
+					.setParams(neuralNetworkPredictor.multiLayerNetworkTraining.params());
 
 			return neuralNetworkPredictor;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	/**
-	 * @return the multiLayerNetworkSource
-	 */
-	public MultiLayerNetwork getMultiLayerNetworkSource() {
-		return multiLayerNetworkSource;
-	}
-
-	/**
-	 * @return the multiLayerNetworkTarget
-	 */
-	public MultiLayerNetwork getMultiLayerNetworkTarget() {
-		return multiLayerNetworkTarget;
 	}
 }

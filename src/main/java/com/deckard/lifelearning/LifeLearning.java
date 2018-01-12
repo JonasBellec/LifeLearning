@@ -1,6 +1,5 @@
 package com.deckard.lifelearning;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -17,7 +16,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
 import com.deckard.lifelearning.model.Action;
 import com.deckard.lifelearning.model.Agent;
 import com.deckard.lifelearning.model.State;
-import com.deckard.lifelearning.universe.RealUniverse;
+import com.deckard.lifelearning.universe.Universe;
 import com.deckard.qlearning.policy.IPolicy;
 import com.deckard.qlearning.policy.PolicyConfiguration;
 import com.deckard.qlearning.policy.QLearningPolicy;
@@ -51,15 +50,15 @@ public class LifeLearning {
 		// neuralNetworkPredictor.getMultiLayerNetworkTarget().setListeners(new StatsListener(statsStorage));
 
 		PolicyConfiguration<State, Action> policyConfiguration = new PolicyConfiguration<>(State.class, Action.class,
-				100, 0.2);
+				0.2, 0.8);
 		IPolicy<State, Action> policy = new QLearningPolicy<>(policyConfiguration, neuralNetworkPredictor);
 
-		for (int k = 0; k < 50; k++) {
-			RealUniverse realUniverse = new RealUniverse(policy, 1000);
+		for (int k = 0; k < 100; k++) {
+			Universe realUniverse = new Universe(policy, 100);
 
 			Integer days = 10;
 
-			for (int i = 0; i < 24 * days; i++) {
+			for (int i = 0; i < 24 * days + 1; i++) {
 				realUniverse.step();
 
 				if (i % 24 == 0) {
@@ -71,13 +70,11 @@ public class LifeLearning {
 				}
 			}
 
-			log(realUniverse, 240);
-
 			NeuralNetworkPredictor.save(neuralNetworkPredictor, "configuration.json", "parameters.txt");
 		}
 	}
 
-	private static int log(RealUniverse realUniverse, int tick) {
+	private static int log(Universe realUniverse, int tick) {
 		int alive = 0;
 		int dead = 0;
 		double rewardTotal = 0;
@@ -85,7 +82,7 @@ public class LifeLearning {
 		for (Agent agent : realUniverse.getAgents()) {
 			if (agent.isAlive()) {
 				alive++;
-				rewardTotal += agent.computeReward();
+				rewardTotal += agent.computeHappiness();
 			} else {
 				dead++;
 			}
@@ -97,15 +94,15 @@ public class LifeLearning {
 			rewardAverage = rewardTotal / alive;
 		}
 
-		logger.log(Level.INFO, String.format("%d/%d => alive : %d, dead : %d, averageReward : %f", tick / 24, tick % 24,
-				alive, dead, rewardAverage));
+		System.out.println(String.format("%d => alive : %d, dead : %d, averageReward : %f", tick / 24, alive, dead,
+				rewardAverage));
 
 		return alive;
 	}
 
 	private static NeuralNetworkPredictor<State, Action> createNewNeuralNetworkPredictor() {
 		int seed = 123;
-		double learningRate = 0.01;
+		double learningRate = 0.1;
 
 		int numHiddenNodes = 20;
 
@@ -117,11 +114,12 @@ public class LifeLearning {
 								.gradientNormalization(GradientNormalization.RenormalizeL2PerLayer)
 								.weightInit(WeightInit.XAVIER).activation(Activation.RELU).build())
 				.layer(1,
-						new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD).weightInit(WeightInit.XAVIER)
-								.activation(Activation.SOFTMAX).weightInit(WeightInit.XAVIER).nIn(numHiddenNodes)
+						new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD).activation(Activation.SOFTMAX)
+								.gradientNormalization(GradientNormalization.RenormalizeL2PerLayer)
+								.weightInit(WeightInit.XAVIER).nIn(numHiddenNodes)
 								.nOut(ActionSpace.getInstance(Action.class).size()).build())
 				.pretrain(false).backprop(true).build();
 
-		return new NeuralNetworkPredictor<>(conf, State.class, Action.class, 0.8);
+		return new NeuralNetworkPredictor<>(conf, State.class, Action.class);
 	}
 }

@@ -1,11 +1,13 @@
 package com.deckard.lifelearning.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.RandomUtils;
 
+import com.deckard.qlearning.predictor.Experience;
 import com.deckard.qlearning.space.Observation;
 import com.deckard.qlearning.space.ObservationSpace;
 import com.deckard.qlearning.universe.IAgent;
@@ -13,10 +15,11 @@ import com.deckard.qlearning.universe.IAgent;
 public class Agent implements IAgent<State, Action> {
 
 	private Map<Need, Integer> mapNeed;
-	private Integer ticks;
 	private boolean alive;
 
 	private ObservationSpace<State> observationSpace;
+
+	private List<Experience<State, Action>> memory;
 
 	public Agent() {
 		this.mapNeed = new HashMap<>();
@@ -24,27 +27,10 @@ public class Agent implements IAgent<State, Action> {
 		this.mapNeed.put(Need.NEED2, RandomUtils.nextInt() % 10 + 5);
 		this.mapNeed.put(Need.NEED3, RandomUtils.nextInt() % 10 + 5);
 
-		this.ticks = 0;
 		this.alive = true;
 
 		observationSpace = new ObservationSpace<>();
-	}
-
-	public Agent(Agent agent) {
-		this.mapNeed = new HashMap<>();
-		this.mapNeed.put(Need.NEED1, agent.mapNeed.get(Need.NEED1));
-		this.mapNeed.put(Need.NEED2, agent.mapNeed.get(Need.NEED2));
-		this.mapNeed.put(Need.NEED3, agent.mapNeed.get(Need.NEED3));
-
-		this.ticks = agent.ticks;
-		this.alive = agent.alive;
-
-		observationSpace = new ObservationSpace<>();
-	}
-
-	@Override
-	public Agent virtualize() {
-		return new Agent(this);
+		memory = new ArrayList<>();
 	}
 
 	@Override
@@ -59,8 +45,6 @@ public class Agent implements IAgent<State, Action> {
 
 	@Override
 	public void life() {
-		ticks++;
-
 		if (alive) {
 			for (Need need : mapNeed.keySet()) {
 				Integer oldScore = mapNeed.get(need);
@@ -85,9 +69,9 @@ public class Agent implements IAgent<State, Action> {
 	}
 
 	@Override
-	public int computeReward() {
+	public Integer computeHappiness() {
 		if (alive) {
-			return (mapNeed.get(Need.NEED1) + mapNeed.get(Need.NEED2) + mapNeed.get(Need.NEED3));
+			return mapNeed.get(Need.NEED1) + mapNeed.get(Need.NEED2) + mapNeed.get(Need.NEED3);
 		} else {
 			return 0;
 		}
@@ -101,13 +85,17 @@ public class Agent implements IAgent<State, Action> {
 		return alive;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
-	public String toString() {
-		return "Agent [mapNeed=" + mapNeed + ", ticks=" + ticks + ", alive=" + alive;
+	public void addToMemory(Experience<State, Action> experience) {
+		memory.add(experience);
+	}
+
+	@Override
+	public Experience<State, Action> getLastExperience() {
+		if (!memory.isEmpty()) {
+			return memory.get(memory.size() - 1);
+		} else {
+			return null;
+		}
 	}
 }

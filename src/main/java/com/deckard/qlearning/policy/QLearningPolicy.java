@@ -4,49 +4,65 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.deckard.qlearning.predictor.Experience;
 import com.deckard.qlearning.predictor.IPredictor;
-import com.deckard.qlearning.predictor.Transition;
 import com.deckard.qlearning.space.IAction;
 import com.deckard.qlearning.space.IState;
 import com.deckard.qlearning.space.ObservationSpace;
 import com.deckard.qlearning.universe.IAgent;
-import com.deckard.qlearning.universe.IRealUniverse;
 import com.deckard.qlearning.universe.IUniverse;
-import com.deckard.qlearning.universe.IVirtualUniverse;
 
 public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAction> implements IPolicy<S, A> {
 
-	private IPredictor<S, A> predictor;
 	private Random random;
+	private IPredictor<S, A> predictor;
 	private PolicyConfiguration<S, A> policyConfiguration;
+
+	private List<Experience<S, A>> collectiveMemory;
 
 	public QLearningPolicy(PolicyConfiguration<S, A> policyConfiguration, IPredictor<S, A> predictor) {
 		this.policyConfiguration = policyConfiguration;
 		this.predictor = predictor;
 
 		this.random = new Random();
+		this.collectiveMemory = new ArrayList<>();
 	}
 
 	@Override
-	public A determineActionWithLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent) {
+	public A determineAction(IUniverse<S, A> universe, IAgent<S, A> agent) {
+		Experience<S, A> experienceOld = agent.getLastExperience();
 
-		IVirtualUniverse<S, A> virtualUniverse = realUniverse.virtualize(agent);
-		List<Transition<S, A>> transitions = projectVirtualUniverse(virtualUniverse);
-		predictor.train(transitions);
+		ObservationSpace<S> observationSpaceCurrent = determineObservationSpace(universe, agent);
+		Integer happinessCurrent = agent.computeHappiness();
 
-		return determineAction(realUniverse, agent);
-	}
+		if (experienceOld != null) {
+			experienceOld.setObservationSpaceNext(observationSpaceCurrent);
+			experienceOld.setHappinessAfter(happinessCurrent);
+			// on ajoute l'expérience dans la mémoire collective qu'une fois qu'elle ait été complétée
+			if (!agent.isAlive()) {
+				// La mort est plus impactante
+				experienceOld.setProbability(4);
+			}
 
-	@Override
-	public A determineActionWithoutLearning(IRealUniverse<S, A> realUniverse, IAgent<S, A> agent) {
-		return determineAction(realUniverse, agent);
-	}
+			collectiveMemory.add(experienceOld);
+		}
 
-	private A determineAction(IUniverse<S, A> universe, IAgent<S, A> agent) {
-		if (random.nextDouble() > policyConfiguration.getEpsilon()) {
-			return predictor.predictAction(determineObservationSpace(universe, agent));
+		if (agent.isAlive()) {
+			Experience<S, A> experienceNew = new Experience<>();
+			experienceNew.setObservationSpacePrevious(observationSpaceCurrent);
+			experienceNew.setHappinessBefore(happinessCurrent);
+
+			if (random.nextDouble() > policyConfiguration.getEpsilon()) {
+				experienceNew.setAction(predictor.predict(experienceNew.getObservationSpacePrevious()));
+			} else {
+				experienceNew.setAction(policyConfiguration.getActionSpace().random());
+			}
+
+			agent.addToMemory(experienceNew);
+			return experienceNew.getAction();
 		} else {
-			return policyConfiguration.getActionSpace().random();
+			// L'agent est mort, il n'agit donc plus
+			return null;
 		}
 	}
 
@@ -59,44 +75,29 @@ public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAc
 		return observationSpace;
 	}
 
-	private List<Transition<S, A>> projectVirtualUniverse(IVirtualUniverse<S, A> virtualUniverse) {
+	@Override
+	public void learnFromCollectiveMemory() {
+		List<Experience<S, A>> sample = new ArrayList<>();
+		List<Experience<S, A>> experiencesToRemove = new ArrayList<>();
 
-		List<Transition<S, A>> transitions = new ArrayList<>();
-
-		while (transitions.size() < policyConfiguration.getProjectionDeep()
-				&& virtualUniverse.getVirtualOwner().isAlive()) {
-			Transition<S, A> transition = new Transition<>();
-
-			int previous = virtualUniverse.getVirtualOwner().computeReward();
-
-			ObservationSpace<S> observationSpacePrevious = determineObservationSpace(virtualUniverse,
-					virtualUniverse.getVirtualOwner());
-
-			transition.setObservationSpacePrevious(observationSpacePrevious);
-			A action = predictor.predictAction(observationSpacePrevious);
-			transition.setAction(action);
-			virtualUniverse.getVirtualOwner().act(action);
-
-			virtualUniverse.step();
-
-			int after = virtualUniverse.getVirtualOwner().computeReward();
-
-			if (after == 0) {
-				transition.setReward(-1);
-			} else if (after < previous) {
-				transition.setReward(0);
-			} else if (after == previous) {
-				transition.setReward(0.5);
-			} else {
-				transition.setReward(1);
+		for (Experience<S, A> experience : collectiveMemory) {
+			if (random.nextDouble() < experience.getProbability() * 0.01) {
+				sample.add(experience);
 			}
 
-			transition.setObservationSpaceNext(
-					determineObservationSpace(virtualUniverse, virtualUniverse.getVirtualOwner()));
-
-			transitions.add(transition);
+			if (random.nextDouble() < Math.tanh(collectiveMemory.size()) / 1000) {
+				experiencesToRemove.add(experience);
+			}
 		}
 
-		return transitions;
+		if (!sample.isEmpty()) {
+			predictor.train(sample, 0.8);
+		}
+
+		if (random.nextDouble() < 0.1) {
+			predictor.updateMultiLayerNetworkFrozen();
+		}
+
+		collectiveMemory.removeAll(experiencesToRemove);
 	}
 }

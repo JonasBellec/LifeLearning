@@ -10,15 +10,15 @@ public class PolicyConfiguration<S extends Enum<S> & IState, A extends Enum<A> &
 	private StateSpace<S> stateSpace;
 	private ActionSpace<A> actionSpace;
 
-	private int projectionDeep;
 	private double epsilon;
+	private double discount;
 
-	public PolicyConfiguration(Class<S> classState, Class<A> classAction, int projectionDeep, double epsilon) {
+	public PolicyConfiguration(Class<S> classState, Class<A> classAction, double epsilon, double discount) {
 		this.stateSpace = StateSpace.getInstance(classState);
 		this.actionSpace = ActionSpace.getInstance(classAction);
 
-		this.projectionDeep = projectionDeep;
 		this.epsilon = epsilon;
+		this.discount = discount;
 	}
 
 	public double getEpsilon() {
@@ -40,10 +40,17 @@ public class PolicyConfiguration<S extends Enum<S> & IState, A extends Enum<A> &
 	}
 
 	/**
-	 * @return the projectionDeep
+	 * @return the discount
 	 */
-	public int getProjectionDeep() {
-		return projectionDeep;
+	public double getDiscount() {
+		return discount;
 	}
 
+	/**
+	 * @param discount
+	 *            the discount to set
+	 */
+	public void setDiscount(double discount) {
+		this.discount = discount;
+	}
 }
