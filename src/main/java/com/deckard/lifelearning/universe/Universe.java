@@ -7,7 +7,6 @@ import com.deckard.lifelearning.model.Action;
 import com.deckard.lifelearning.model.Agent;
 import com.deckard.lifelearning.model.State;
 import com.deckard.qlearning.policy.IPolicy;
-import com.deckard.qlearning.space.Observation;
 import com.deckard.qlearning.space.ObservationSpace;
 import com.deckard.qlearning.universe.IUniverse;
 
@@ -38,8 +37,6 @@ public class Universe implements IUniverse<State, Action> {
 	@Override
 	public ObservationSpace<State> getObservationSpace(List<State> states) {
 		observationSpace.clear();
-		observationSpace.add(new Observation<State, Integer>(State.DAY, time.getDay()));
-		observationSpace.add(new Observation<State, Integer>(State.HOUR, time.getHour()));
 
 		return observationSpace;
 	}
@@ -67,7 +64,7 @@ public class Universe implements IUniverse<State, Action> {
 		}
 
 		policy.learnFromCollectiveMemory();
-		System.out.println(String.format("action1 : %d, action2 : %d, action3 : %d", action1, action2, action3));
+		// System.out.println(String.format("action1 : %d, action2 : %d, action3 : %d", action1, action2, action3));
 	}
 
 	/**

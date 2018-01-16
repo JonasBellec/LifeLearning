@@ -6,9 +6,7 @@ public enum State implements IState {
 
 	NEED1("need1", false),
 	NEED2("need2", false),
-	NEED3("need3", false),
-	DAY("day", true),
-	HOUR("hour", true);
+	NEED3("need3", false);
 
 	private String name;
 	private boolean universeState;

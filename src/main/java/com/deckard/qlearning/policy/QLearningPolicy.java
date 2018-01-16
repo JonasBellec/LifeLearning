@@ -39,11 +39,6 @@ public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAc
 			experienceOld.setObservationSpaceNext(observationSpaceCurrent);
 			experienceOld.setHappinessAfter(happinessCurrent);
 			// on ajoute l'expérience dans la mémoire collective qu'une fois qu'elle ait été complétée
-			if (!agent.isAlive()) {
-				// La mort est plus impactante
-				experienceOld.setProbability(4);
-			}
-
 			collectiveMemory.add(experienceOld);
 		}
 
@@ -80,24 +75,29 @@ public class QLearningPolicy<S extends Enum<S> & IState, A extends Enum<A> & IAc
 		List<Experience<S, A>> sample = new ArrayList<>();
 		List<Experience<S, A>> experiencesToRemove = new ArrayList<>();
 
-		for (Experience<S, A> experience : collectiveMemory) {
-			if (random.nextDouble() < experience.getProbability() * 0.01) {
-				sample.add(experience);
+		if (collectiveMemory.size() > 1000) {
+			for (Experience<S, A> experience : collectiveMemory) {
+				Double probability = ((double) (experience.getProbability() * 1000))
+						/ ((double) (collectiveMemory.size()));
+
+				if (random.nextDouble() < probability) {
+					sample.add(experience);
+				}
+
+				if (random.nextDouble() < Math.tanh(collectiveMemory.size()) / 10) {
+					experiencesToRemove.add(experience);
+				}
 			}
 
-			if (random.nextDouble() < Math.tanh(collectiveMemory.size()) / 1000) {
-				experiencesToRemove.add(experience);
+			if (!sample.isEmpty()) {
+				predictor.train(sample, 0.8);
 			}
-		}
 
-		if (!sample.isEmpty()) {
-			predictor.train(sample, 0.8);
-		}
+			if (random.nextDouble() < 0.1) {
+				predictor.updateMultiLayerNetworkFrozen();
+			}
 
-		if (random.nextDouble() < 0.1) {
-			predictor.updateMultiLayerNetworkFrozen();
+			collectiveMemory.removeAll(experiencesToRemove);
 		}
-
-		collectiveMemory.removeAll(experiencesToRemove);
 	}
 }

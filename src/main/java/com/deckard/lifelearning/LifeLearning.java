@@ -54,7 +54,7 @@ public class LifeLearning {
 		IPolicy<State, Action> policy = new QLearningPolicy<>(policyConfiguration, neuralNetworkPredictor);
 
 		for (int k = 0; k < 100; k++) {
-			Universe realUniverse = new Universe(policy, 100);
+			Universe realUniverse = new Universe(policy, 1000);
 
 			Integer days = 10;
 
